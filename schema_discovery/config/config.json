@@ -1,0 +1,13 @@
+{
+    "data_source": "neo4j",
+    "neo4j": {
+        "uri": "bolt://localhost:7687",
+        "username": "neo4j",
+        "password": "password"
+    },
+    "node_type_extraction": "label_based",
+    "edge_type_extraction":"simple",
+    "out_dir": "..\\results\\",
+    "optional_labels": false,
+    "property_outlier_threshold": 5
+}
