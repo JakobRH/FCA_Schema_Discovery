@@ -2,7 +2,6 @@ from .base_extractor import BaseExtractor
 from neo4j import GraphDatabase
 import pandas as pd
 
-
 def get_nodes_labels_and_properties(tx):
     query = """
         MATCH (n)
@@ -24,11 +23,14 @@ class Neo4jExtractor(BaseExtractor):
         with driver.session() as session:
             self.node_data = session.read_transaction(get_nodes_labels_and_properties)
 
-        driver.close()
 
+
+
+        driver.close()
         node_ids = list({str(nl[0]) for nl in self.node_data})
         labels = sorted({label for _, labels, _ in self.node_data for label in labels})
         properties = sorted({key for _, _, props in self.node_data for key in props.keys()})
+
 
         columns = []
         if self.config.get("node_type_extraction") == "label_based":
@@ -44,7 +46,6 @@ class Neo4jExtractor(BaseExtractor):
         return df
 
     def _fill_node_dataframe_context(self, df, node_data):
-
         for node_id, labels, props in node_data:
             node_id_str = str(node_id)
             if self.config.get("node_type_extraction") == "label_based" or self.config.get(

@@ -8,6 +8,11 @@
     "node_type_extraction": "label_based",
     "edge_type_extraction":"simple",
     "out_dir": "..\\results\\",
-    "optional_labels": false,
-    "property_outlier_threshold": 5
+    "optional_labels": true,
+    "property_outlier_threshold": 5,
+    "label_based_merge_threshold": 0.5,
+    "graph_type_name": "GraphTypeExample",
+    "graph_type_mode": "LOOSE",
+    "open_labels": true,
+    "open_properties": true
 }

@@ -1,9 +1,11 @@
 from schema_discovery.graph_extraction.extractor_factory import ExtractorFactory
 import argparse
 from config.config import Config
+from schema_discovery.schema_creation.schema_creator import SchemaCreator
 from utils.logger import setup_logger
 from fca.fca_helper import FCAHelper
 from schema_inference.node_type_extractor import NodeTypeExtractor
+
 def main():
     parser = argparse.ArgumentParser(description='Schema Extractor Tool')
     parser.add_argument('--config', type=str, help='Path to config file', default='config\config.json')
@@ -34,9 +36,8 @@ def main():
     #edge_types = edge_type_extractor.extract_types()
 
     # Step 4: Create schema
-    #schema_creator = SchemaCreator(node_types, edge_types)
-    #schema = schema_creator.create_schema()
-    #schema_creator.save_schema(config.get('output_schema_file'))
+    schema_creator = SchemaCreator(config, node_types, [])
+    schema_creator.save_schema(config.get("out_dir") + "schema.txt")
 
     logger.info('Schema extraction completed successfully.')
 

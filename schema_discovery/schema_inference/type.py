@@ -1,13 +1,17 @@
 class Type:
-    def __init__(self, concept_id, labels, properties, supertypes, subtypes):
+    def __init__(self, config, concept_id, labels, properties, supertypes, subtypes):
+        self.config = config
         self.concept_id = concept_id
-        self.labels = labels
+        self.labels = set(labels)
+        self.optional_labels = set()
         self.properties = properties
+        self.optional_properties = {}
         self.nodes = set()
         self.edges = set()
-        self.supertypes = supertypes
-        self.subtypes = subtypes
+        self.supertypes = set(supertypes)
+        self.subtypes = set(subtypes)
         self.name = self._generate_name()
+        self.is_abstract = False
 
     def add_node(self, node):
         self.nodes.add(node)
@@ -21,16 +25,115 @@ class Type:
     def add_subtype(self, subtype):
         self.subtypes.add(subtype)
 
-    def to_schema_part(self):
-        return {
-            "name": self.name,
-            "labels": list(self.labels),
-            "properties": list(self.properties.keys()),
-            "nodes": list(self.nodes),
-            "edges": list(self.edges),
-            "subtypes": [subtype.name for subtype in self.subtypes],
-            "supertypes": [supertype.name for supertype in self.supertypes]
-        }
+    def to_schema(self, type_kind='NODE'):
+        if type_kind == 'NODE':
+            return self._to_node_schema()
+        elif type_kind == 'EDGE':
+            return self._to_edge_schema()
+        else:
+            raise ValueError("Unsupported type kind")
+
+    def _to_node_schema(self):
+        labels_spec = f": {self._format_labels()}" if self.labels else ""
+        properties_spec = self._format_properties()
+        abstract = "ABSTRACT " if self.is_abstract else ""
+        open_labels = "OPEN " if self.config.get("optional_labels") else ""
+        return f"CREATE NODE TYPE {abstract} ({self.name} {labels_spec} {open_labels}{properties_spec});"
+
+    def _to_edge_schema(self):
+        middle_type = f"[{self.name} {self._format_labels()} {self._format_properties()}]"
+        start_type = f"({self._format_labels()})"
+        end_type = f"({self._format_labels()})"
+        abstract = "ABSTRACT " if self.is_abstract else ""
+        return f"CREATE EDGE TYPE {abstract}{start_type} - {middle_type} -> {end_type};"
+
+    def _format_labels(self):
+        supertypes_and_labels = []
+        supertypes_and_labels.extend(self.supertypes)
+        supertypes_and_labels.extend(self.labels)
+        supertypes_and_labels.extend(f"{label}?" for label in self.optional_labels)
+        if not supertypes_and_labels:
+            return ""
+        return " & ".join(supertypes_and_labels)
+
+    def _format_properties(self):
+        properties = []
+        for key, value in self.properties.items():
+            properties.append(f"{key} {value}")
+        for key, value in self.optional_properties.items():
+            properties.append(f"OPTIONAL {key} {value}")
+
+        include_open = self.config.get("optional_properties")
+        properties_str = ", ".join(properties)
+
+        if properties_str or include_open:
+            if include_open and properties_str:
+                properties_str += ", OPEN"
+            elif include_open:
+                properties_str = "OPEN"
+            return f"{{{properties_str}}}"
+        else:
+            return "{}"
 
     def _generate_name(self):
-        return "type" + str(self.concept_id)
+        return "NodeType" + str(self.concept_id)
+
+    def remove_inherited_features(self, types):
+        type_dict = {type_.name: type_ for type_ in types}
+        for supertype_name in self.supertypes:
+            supertype = type_dict.get(supertype_name)
+            self.labels.difference_update(supertype.labels)
+            self.optional_labels.difference_update(supertype.labels)
+            for key in list(self.properties.keys()):
+                if key in supertype.properties:
+                    del self.properties[key]
+
+    def jaccard_similarity(self, other):
+        # Compute Jaccard similarity for labels
+        label_intersection = len(self.labels & other.labels)
+        label_union = len(self.labels | other.labels)
+        label_similarity = label_intersection / label_union if label_union != 0 else 0
+
+        # Compute Jaccard similarity for properties
+        property_intersection = len(self.properties.keys() & other.properties.keys())
+        property_union = len(self.properties.keys() | other.properties.keys())
+        property_similarity = property_intersection / property_union if property_union != 0 else 0
+
+        return (label_similarity + property_similarity) / 2
+
+    def merge_with_supertype(self, supertype):
+        # 1. Handle labels:
+        # - Labels common to both stay as normal labels
+        # - Labels unique to subtype or supertype become optional labels in supertype
+        common_labels = self.labels & supertype.labels
+        subtype_only_labels = self.labels - supertype.labels
+        supertype_only_labels = supertype.labels - self.labels
+
+        # Common labels remain as normal
+        supertype.labels = common_labels
+
+        # Unique labels from subtype become optional in supertype
+        supertype.optional_labels.update(subtype_only_labels)
+        supertype.optional_labels.update(supertype_only_labels)
+
+        # 2. Handle properties:
+        # - Properties common to both stay as normal properties
+        # - Properties unique to subtype or supertype become optional in supertype
+        common_properties = self.properties.keys() & supertype.properties.keys()
+        subtype_only_properties = self.properties.keys() - supertype.properties.keys()
+        supertype_only_properties = supertype.properties.keys() - self.properties.keys()
+
+        # Common properties remain as normal
+        supertype.properties = {key: self.properties[key] for key in common_properties}
+
+        # Unique properties from subtype become optional in supertype
+        for key in subtype_only_properties:
+            supertype.optional_properties[key] = self.properties[key]
+        for key in supertype_only_properties:
+            supertype.optional_properties[key] = supertype.properties[key]
+
+        # Update the supertype's subtypes to include the subtype's subtypes
+        supertype.subtypes.update(self.subtypes)
+
+        # Clear the subtype's subtypes after merging
+        self.subtypes.clear()

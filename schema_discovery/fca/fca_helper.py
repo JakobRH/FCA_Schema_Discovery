@@ -1,6 +1,7 @@
 from fcapy.context import FormalContext
 from fcapy.lattice import ConceptLattice
-import pandas as pd
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from fcapy.visualizer import LineVizNx
 
