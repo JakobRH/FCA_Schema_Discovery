@@ -1,5 +1,5 @@
 class Type:
-    def __init__(self, config, concept_id, labels, properties, supertypes, subtypes):
+    def __init__(self, config, concept_id, labels, properties, supertypes, subtypes, entity):
         self.config = config
         self.concept_id = concept_id
         self.labels = set(labels)
@@ -10,8 +10,11 @@ class Type:
         self.edges = set()
         self.supertypes = set(supertypes)
         self.subtypes = set(subtypes)
-        self.name = self._generate_name()
         self.is_abstract = False
+        self.entity = entity
+        self.startpoint = 0
+        self.endpoint = 0
+        self.name = self._generate_name()
 
     def add_node(self, node):
         self.nodes.add(node)
@@ -25,10 +28,10 @@ class Type:
     def add_subtype(self, subtype):
         self.subtypes.add(subtype)
 
-    def to_schema(self, type_kind='NODE'):
-        if type_kind == 'NODE':
+    def to_schema(self):
+        if self.entity == 'NODE':
             return self._to_node_schema()
-        elif type_kind == 'EDGE':
+        elif self.entity == 'EDGE':
             return self._to_edge_schema()
         else:
             raise ValueError("Unsupported type kind")
@@ -76,7 +79,11 @@ class Type:
             return "{}"
 
     def _generate_name(self):
-        return "NodeType" + str(self.concept_id)
+        if self.entity == "NODE":
+            return "NodeType" + str(self.concept_id)
+        if self.entity == "EDGE":
+            return "EdgeType" + str(self.concept_id)
+        return ""
 
     def remove_inherited_features(self, types):
         type_dict = {type_.name: type_ for type_ in types}

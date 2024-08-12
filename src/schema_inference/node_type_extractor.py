@@ -1,5 +1,5 @@
 from .base_type_extractor import BaseTypeExtractor
-from .type import Type
+from src.graph_type.type import Type
 from collections import defaultdict, Counter
 from neo4j.time import Date, Time, DateTime, Duration
 from neo4j.spatial import Point
@@ -20,26 +20,25 @@ class NodeTypeExtractor(BaseTypeExtractor):
     def _extract_label_based_types(self):
         types = []
         num_concepts = len(self.fca_helper.node_concept_lattice)
+        top_concept_id = 0
+        bottom_concept_id = num_concepts - 1
+
         for concept_id, concept in enumerate(self.fca_helper.node_concept_lattice):
             if concept_id == 0 or concept_id == num_concepts - 1:
                 continue  # Skip first and last concept
             labels = concept.intent
             nodes = concept.extent
-            subtypes, supertypes = self.fca_helper.get_sub_super_concepts(concept_id)
-            type_ = Type(self.config, concept_id=concept_id, labels=labels, properties={}, supertypes=supertypes, subtypes=subtypes)
+
+            subtypes, supertypes = self.fca_helper.get_node_sub_super_concepts(concept_id)
+            filtered_supertypes = (x for x in supertypes if x != top_concept_id)
+            filtered_subtypes = (x for x in subtypes if x != bottom_concept_id)
+
+            type_ = Type(self.config, concept_id=concept_id, labels=labels, properties={}, supertypes=filtered_supertypes, subtypes=filtered_subtypes, entity="NODE")
             for node in nodes:
                 type_.add_node(node)
             types.append(type_)
 
-        top_concept_id = 0
-        bottom_concept_id = num_concepts - 1
-        mapping = self._conceptid_to_name_mapping(types)
-        # Remove references to the top and bottom concepts in subtypes and supertypes
-        for type_ in types:
-            type_.subtypes = set([st for st in type_.subtypes if st != top_concept_id and st != bottom_concept_id])
-            type_.supertypes = set([st for st in type_.supertypes if st != top_concept_id and st != bottom_concept_id])
-            type_.subtypes = set([mapping[concept_id] for concept_id in type_.subtypes])
-            type_.supertypes = set([mapping[concept_id] for concept_id in type_.supertypes])
+        self._change_references(types)
 
         self._compute_properties(types)
 
@@ -51,8 +50,7 @@ class NodeTypeExtractor(BaseTypeExtractor):
 
         return types
 
-    def _conceptid_to_name_mapping(self, types):
-        return {type_.concept_id: type_.name for type_ in types}
+
 
     def _extract_property_based_types(self):
         types = []
@@ -66,9 +64,9 @@ class NodeTypeExtractor(BaseTypeExtractor):
         threshold = self.config.get("property_outlier_threshold")
         node_property_map = {}
 
-        for node_id, labels, properties in self.db_extractor.node_data:
-            node_id = str(node_id)
-            node_property_map[node_id] = properties
+        for node in self.graph_data.nodes:
+            node_id = node.id
+            node_property_map[node_id] = node.properties
 
         for type_instance in types:
             node_ids = set(type_instance.nodes)
@@ -154,3 +152,12 @@ class NodeTypeExtractor(BaseTypeExtractor):
                     type_.subtypes.remove(subtype.name)
 
         return types
+
+    def _change_references(self, types):
+        mapping = self._conceptid_to_name_mapping(types)
+        for type_ in types:
+            type_.subtypes = set([mapping[concept_id] for concept_id in type_.subtypes])
+            type_.supertypes = set([mapping[concept_id] for concept_id in type_.supertypes])
+
+    def _conceptid_to_name_mapping(self, types):
+        return {type_.concept_id: type_.name for type_ in types}

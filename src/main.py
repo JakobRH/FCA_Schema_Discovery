@@ -1,10 +1,11 @@
-from schema_discovery.graph_extraction.extractor_factory import ExtractorFactory
+from src.graph_extraction.extractor_factory import ExtractorFactory
 import argparse
 from config.config import Config
-from schema_discovery.schema_creation.schema_creator import SchemaCreator
+from src.graph_type.graph_type import GraphType
 from utils.logger import setup_logger
 from fca.fca_helper import FCAHelper
 from schema_inference.node_type_extractor import NodeTypeExtractor
+from schema_inference.edge_type_extractor import EdgeTypeExtractor
 
 def main():
     parser = argparse.ArgumentParser(description='Schema Extractor Tool')
@@ -22,22 +23,23 @@ def main():
 
     # Step 1: Extract data
     extractor = ExtractorFactory.get_extractor(config)
-    node_data = extractor.extract_node_data()
+    extractor.extract_graph_data()
+    graph_data = extractor.graph_data
 
     # Step 2: Perform FCA
     node_fca_helper = FCAHelper(config)
-    node_fca_helper.generate_node_concept_lattice(node_data)
+    graph_type = GraphType(config)
 
-    # Step 3: Extract types
-    node_type_extractor = NodeTypeExtractor(extractor, node_fca_helper, config)
-    node_types = node_type_extractor.extract_types()
+    node_fca_helper.generate_node_concept_lattice(graph_data)
+    node_type_extractor = NodeTypeExtractor(config, node_fca_helper, graph_data)
+    graph_type.node_types = node_type_extractor.extract_types()
 
-    #edge_type_extractor = EdgeTypeExtractor(edge_concept_lattice, config)
-    #edge_types = edge_type_extractor.extract_types()
+    node_fca_helper.generate_edge_concept_lattice(graph_data)
+    edge_type_extractor = EdgeTypeExtractor(config, node_fca_helper, graph_data)
+    #graph_type.edge_types = edge_type_extractor.extract_types()
 
     # Step 4: Create schema
-    schema_creator = SchemaCreator(config, node_types, [])
-    schema_creator.save_schema(config.get("out_dir") + "schema.txt")
+    graph_type.create_schema()
 
     logger.info('Schema extraction completed successfully.')
 

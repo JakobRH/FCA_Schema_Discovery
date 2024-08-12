@@ -6,7 +6,7 @@
         "password": "password"
     },
     "node_type_extraction": "label_based",
-    "edge_type_extraction":"simple",
+    "edge_type_extraction":"label_based",
     "out_dir": "..\\results\\",
     "optional_labels": true,
     "property_outlier_threshold": 5,

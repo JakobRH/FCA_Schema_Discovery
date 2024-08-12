@@ -1,4 +1,4 @@
-from schema_discovery.graph_extraction.neo4j_extractor import Neo4jExtractor
+from src.graph_extraction.neo4j_extractor import Neo4jExtractor
 
 
 class ExtractorFactory:
