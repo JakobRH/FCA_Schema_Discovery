@@ -1,15 +1,16 @@
 {
     "data_source": "neo4j",
     "neo4j": {
-        "uri": "bolt://localhost:7687",
-        "username": "neo4j",
-        "password": "password"
+        "uri": "https://demo.neo4jlabs.com:7473",
+        "username": "northwind",
+        "password": "northwind"
     },
     "node_type_extraction": "label_based",
     "edge_type_extraction":"label_based",
     "out_dir": "..\\results\\",
     "optional_labels": true,
     "property_outlier_threshold": 5,
+    "endpoint_outlier_threshold": 5,
     "label_based_merge_threshold": 0.5,
     "graph_type_name": "GraphTypeExample",
     "graph_type_mode": "LOOSE",

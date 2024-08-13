@@ -27,13 +27,13 @@ class Edge(GraphElement):
 class GraphData:
     def __init__(self):
         self.nodes = []
-        self.edges = []
+        self.edges = {}
 
     def add_node(self, node):
         self.nodes.append(node)
 
     def add_edge(self, edge):
-        self.edges.append(edge)
+        self.edges[edge.id] = edge
 
     def get_node_by_id(self, node_id):
         for node in self.nodes:
@@ -42,7 +42,4 @@ class GraphData:
         return None
 
     def get_edge_by_id(self, edge_id):
-        for edge in self.edges:
-            if edge.id == edge_id:
-                return edge
-        return None
+        return self.edges.get(edge_id, None)

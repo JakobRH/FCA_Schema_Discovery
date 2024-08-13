@@ -6,6 +6,8 @@ from utils.logger import setup_logger
 from fca.fca_helper import FCAHelper
 from schema_inference.node_type_extractor import NodeTypeExtractor
 from schema_inference.edge_type_extractor import EdgeTypeExtractor
+from neo4j.time import Date, Time, DateTime, Duration
+from neo4j.spatial import Point
 
 def main():
     parser = argparse.ArgumentParser(description='Schema Extractor Tool')
@@ -31,12 +33,12 @@ def main():
     graph_type = GraphType(config)
 
     node_fca_helper.generate_node_concept_lattice(graph_data)
-    node_type_extractor = NodeTypeExtractor(config, node_fca_helper, graph_data)
+    node_type_extractor = NodeTypeExtractor(config, node_fca_helper, graph_data, graph_type)
     graph_type.node_types = node_type_extractor.extract_types()
 
     node_fca_helper.generate_edge_concept_lattice(graph_data)
-    edge_type_extractor = EdgeTypeExtractor(config, node_fca_helper, graph_data)
-    #graph_type.edge_types = edge_type_extractor.extract_types()
+    edge_type_extractor = EdgeTypeExtractor(config, node_fca_helper, graph_data, graph_type)
+    graph_type.edge_types = edge_type_extractor.extract_types()
 
     # Step 4: Create schema
     graph_type.create_schema()

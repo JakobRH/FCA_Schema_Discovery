@@ -12,8 +12,8 @@ class Type:
         self.subtypes = set(subtypes)
         self.is_abstract = False
         self.entity = entity
-        self.startpoint = 0
-        self.endpoint = 0
+        self.startpoint_types = set()
+        self.endpoint_types = set()
         self.name = self._generate_name()
 
     def add_node(self, node):
@@ -37,16 +37,18 @@ class Type:
             raise ValueError("Unsupported type kind")
 
     def _to_node_schema(self):
-        labels_spec = f": {self._format_labels()}" if self.labels else ""
-        properties_spec = self._format_properties()
+        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels else ""
+        properties_spec = f"{self._format_properties()}" if self.properties or self.optional_properties else ""
         abstract = "ABSTRACT " if self.is_abstract else ""
         open_labels = "OPEN " if self.config.get("optional_labels") else ""
         return f"CREATE NODE TYPE {abstract} ({self.name} {labels_spec} {open_labels}{properties_spec});"
 
     def _to_edge_schema(self):
-        middle_type = f"[{self.name} {self._format_labels()} {self._format_properties()}]"
-        start_type = f"({self._format_labels()})"
-        end_type = f"({self._format_labels()})"
+        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels else ""
+        properties_spec = f"{self._format_properties()}" if self.properties or self.optional_properties else ""
+        middle_type = f"[{self.name} {labels_spec} {properties_spec}]"
+        start_type = f"({self._format_endpoints(self.startpoint_types)})"
+        end_type = f"({self._format_endpoints(self.endpoint_types)})"
         abstract = "ABSTRACT " if self.is_abstract else ""
         return f"CREATE EDGE TYPE {abstract}{start_type} - {middle_type} -> {end_type};"
 
@@ -78,6 +80,11 @@ class Type:
         else:
             return "{}"
 
+    def _format_endpoints(self, endpoints):
+        if not endpoints:
+            return ""
+        return ":" + " | ".join(endpoints)
+
     def _generate_name(self):
         if self.entity == "NODE":
             return "NodeType" + str(self.concept_id)
@@ -91,9 +98,13 @@ class Type:
             supertype = type_dict.get(supertype_name)
             self.labels.difference_update(supertype.labels)
             self.optional_labels.difference_update(supertype.labels)
+            self.supertypes.difference_update(supertype.supertypes)
             for key in list(self.properties.keys()):
                 if key in supertype.properties:
                     del self.properties[key]
+            if self.entity == "EDGE":
+                self.startpoint_types.difference_update(supertype.startpoint_types)
+                self.endpoint_types.difference_update(supertype.endpoint_types)
 
     def jaccard_similarity(self, other):
         # Compute Jaccard similarity for labels

@@ -69,8 +69,8 @@ class FCAHelper:
         return df
 
     def _create_edge_dataframe(self, graph_data):
-        edges = graph_data.edges
-        edge_ids = [edge.id for edge in edges]
+        edges = graph_data.edges.values()
+        edge_ids = list(graph_data.edges.keys())
 
         all_labels = sorted({label for edge in edges for label in edge.labels})
         all_properties = sorted({key for edge in edges for key in edge.properties.keys()})
