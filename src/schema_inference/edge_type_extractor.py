@@ -1,6 +1,7 @@
 from collections import defaultdict, Counter
 
-from .base_type_extractor import BaseTypeExtractor, change_references, infer_data_type, merge_types
+from .base_type_extractor import BaseTypeExtractor, change_references, infer_data_type, merge_types, \
+    find_and_create_abstract_types
 from src.graph_type.type import Type
 
 class EdgeTypeExtractor(BaseTypeExtractor):

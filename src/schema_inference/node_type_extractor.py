@@ -1,4 +1,5 @@
-from .base_type_extractor import BaseTypeExtractor, infer_data_type, change_references, merge_types
+from .base_type_extractor import BaseTypeExtractor, infer_data_type, change_references, merge_types, \
+    find_and_create_abstract_types
 from src.graph_type.type import Type
 from collections import defaultdict, Counter
 
@@ -42,6 +43,8 @@ class NodeTypeExtractor(BaseTypeExtractor):
 
         if self.config.get("optional_labels"):
             types = merge_types(self.config, types)
+
+        find_and_create_abstract_types(self.config, types)
 
         for type_ in types:
             type_.remove_inherited_features(types)

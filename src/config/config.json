@@ -1,9 +1,9 @@
 {
     "data_source": "neo4j",
     "neo4j": {
-        "uri": "https://demo.neo4jlabs.com:7473",
-        "username": "northwind",
-        "password": "northwind"
+        "uri": "bolt://localhost:7687",
+        "username": "neo4j",
+        "password": "password"
     },
     "node_type_extraction": "label_based",
     "edge_type_extraction":"label_based",
@@ -15,5 +15,6 @@
     "graph_type_name": "GraphTypeExample",
     "graph_type_mode": "LOOSE",
     "open_labels": true,
-    "open_properties": true
+    "open_properties": true,
+    "abstract_type_threshold": 0.5
 }

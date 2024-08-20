@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from neo4j.time import Date, Time, DateTime, Duration
 from neo4j.spatial import Point
-def infer_data_type( value):
+
+from src.graph_type.type import Type
+
+
+def infer_data_type(value):
     if isinstance(value, str):
         return "STRING"
     elif isinstance(value, int):
@@ -27,14 +31,17 @@ def infer_data_type( value):
     else:
         return "UNKNOWN"
 
+
 def change_references(types):
     mapping = conceptid_to_name_mapping(types)
     for type_ in types:
         type_.subtypes = set([mapping[concept_id] for concept_id in type_.subtypes])
         type_.supertypes = set([mapping[concept_id] for concept_id in type_.supertypes])
 
-def conceptid_to_name_mapping( types):
+
+def conceptid_to_name_mapping(types):
     return {type_.concept_id: type_.name for type_ in types}
+
 
 def merge_types(config, types):
     while True:
@@ -77,6 +84,70 @@ def merge_types(config, types):
                 type_.subtypes.remove(subtype.name)
 
     return types
+
+
+def find_and_create_abstract_types(config, types):
+    created_abstract_types = []
+
+    # Compare each pair of types
+    for i in range(len(types)):
+        for j in range(i + 1, len(types)):
+            type1 = types[i]
+            type2 = types[j]
+
+            # Calculate similarity
+            similarity = type1.jaccard_similarity(type2)
+
+            # If similarity is above the threshold, create an abstract type
+            if similarity >= config.get("abstract_type_threshold"):
+                abstract_type = _create_abstract_type(config, type1, type2)
+                created_abstract_types.append(abstract_type)
+
+    types.extend(created_abstract_types)
+
+
+def _create_abstract_type(config, type1, type2):
+
+    # Gather all unique labels and properties from both types
+    shared_labels = type1.labels.intersection(type2.labels)
+    shared_optional_labels = type1.optional_labels.intersection(type2.optional_labels)
+    shared_properties = {k: v for k, v in type1.properties.items() if
+                         k in type2.properties and type2.properties[k] == v}
+    shared_optional_properties = {k: v for k, v in type1.optional_properties.items() if
+                                  k in type2.optional_properties and type2.optional_properties[k] == v}
+
+    abstract_type = Type(
+        config=config,
+        concept_id=0, #TODO: find concept id
+        labels=list(shared_labels),
+        properties=shared_properties,
+        supertypes=set(),
+        subtypes={type1.concept_id, type2.concept_id},
+        entity=type1.entity
+    )
+    abstract_type.optional_labels = shared_optional_labels
+    abstract_type.optional_properties = shared_optional_properties
+    abstract_type.is_abstract = True
+
+    type1.supertypes.add(abstract_type.concept_id)
+    type2.supertypes.add(abstract_type.concept_id)
+
+    type1.labels.difference_update(shared_labels)
+    type2.labels.difference_update(shared_labels)
+
+    type1.optional_labels.difference_update(shared_optional_labels)
+    type2.optional_labels.difference_update(shared_optional_labels)
+
+    type1.properties = {k: v for k, v in type1.properties.items() if k not in shared_properties}
+    type2.properties = {k: v for k, v in type2.properties.items() if k not in shared_properties}
+
+    type1.optional_properties = {k: v for k, v in type1.optional_properties.items() if
+                                 k not in shared_optional_properties}
+    type2.optional_properties = {k: v for k, v in type2.optional_properties.items() if
+                                 k not in shared_optional_properties}
+
+    return abstract_type
+
 
 class BaseTypeExtractor(ABC):
     def __init__(self, config, fca_helper, graph_data, graph_type):

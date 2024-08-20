@@ -86,10 +86,11 @@ class Type:
         return ":" + " | ".join(endpoints)
 
     def _generate_name(self):
+        name = "Abstract" if self.is_abstract else ""
         if self.entity == "NODE":
-            return "NodeType" + str(self.concept_id)
+            return name + "NodeType" + str(self.concept_id)
         if self.entity == "EDGE":
-            return "EdgeType" + str(self.concept_id)
+            return name + "EdgeType" + str(self.concept_id)
         return ""
 
     def remove_inherited_features(self, types):
