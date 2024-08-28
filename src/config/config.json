@@ -5,10 +5,12 @@
         "username": "neo4j",
         "password": "password"
     },
-    "node_type_extraction": "label_based",
-    "edge_type_extraction":"label_based",
+    "node_type_extraction": "property_based",
+    "edge_type_extraction":"property_based",
     "out_dir": "..\\results\\",
     "optional_labels": true,
+    "optional_properties": true,
+    "label_outlier_threshold": 5,
     "property_outlier_threshold": 5,
     "endpoint_outlier_threshold": 5,
     "label_based_merge_threshold": 0.5,
@@ -16,5 +18,6 @@
     "graph_type_mode": "LOOSE",
     "open_labels": true,
     "open_properties": true,
-    "abstract_type_threshold": 0.5
+    "abstract_type_threshold": 0.5,
+    "remove_inherited_features": true
 }

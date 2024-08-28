@@ -1,3 +1,8 @@
+from collections import defaultdict, Counter
+
+from src.schema_inference.base_type_extractor import infer_data_type
+
+
 class GraphElement:
     def __init__(self, element_id, labels=None, properties=None):
         self.id = str(element_id)  # Ensuring ID is stored as a string
@@ -26,20 +31,40 @@ class Edge(GraphElement):
 
 class GraphData:
     def __init__(self):
-        self.nodes = []
+        self.nodes = {}
         self.edges = {}
+        self.node_property_data_types = {}
+        self.edge_property_data_types = {}
 
     def add_node(self, node):
-        self.nodes.append(node)
+        self.nodes[node.id] = node
 
     def add_edge(self, edge):
         self.edges[edge.id] = edge
 
     def get_node_by_id(self, node_id):
-        for node in self.nodes:
-            if node.id == node_id:
-                return node
-        return None
+        return self.nodes.get(node_id, None)
 
     def get_edge_by_id(self, edge_id):
         return self.edges.get(edge_id, None)
+
+    def infer_property_data_types(self):
+        node_property_data_type_dict = defaultdict(list)
+        edge_property_data_type_dict = defaultdict(list)
+
+        for node in self.nodes.values():
+            for prop, val in node.properties.items():
+                node_property_data_type_dict[prop].append(infer_data_type(val))
+
+        for edge in self.edges.values():
+            for prop, val in edge.properties.items():
+                edge_property_data_type_dict[prop].append(infer_data_type(val))
+
+        self.node_property_data_types = {
+            prop: Counter(types).most_common(1)[0][0]
+            for prop, types in node_property_data_type_dict.items()
+        }
+        self.edge_property_data_types = {
+            prop: Counter(types).most_common(1)[0][0]
+            for prop, types in edge_property_data_type_dict.items()
+        }

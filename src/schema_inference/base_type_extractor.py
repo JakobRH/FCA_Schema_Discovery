@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
+
 from neo4j.time import Date, Time, DateTime, Duration
 from neo4j.spatial import Point
 
@@ -66,6 +68,7 @@ def merge_types(config, types):
         subtype, supertype = best_pair
         subtype.merge_with_supertype(supertype)
 
+        print("SUBTYPE: " + subtype.name, subtype.labels, subtype.properties)
         # Step 4: Update relationships
         types.remove(subtype)
 
@@ -118,16 +121,16 @@ def _create_abstract_type(config, type1, type2):
 
     abstract_type = Type(
         config=config,
-        concept_id=0, #TODO: find concept id
+        concept_id=0,
         labels=list(shared_labels),
         properties=shared_properties,
         supertypes=set(),
-        subtypes={type1.concept_id, type2.concept_id},
-        entity=type1.entity
+        subtypes={type1.name, type2.name},
+        entity=type1.entity,
+        is_abstract=True
     )
     abstract_type.optional_labels = shared_optional_labels
     abstract_type.optional_properties = shared_optional_properties
-    abstract_type.is_abstract = True
 
     type1.supertypes.add(abstract_type.concept_id)
     type2.supertypes.add(abstract_type.concept_id)
@@ -147,7 +150,6 @@ def _create_abstract_type(config, type1, type2):
                                  k not in shared_optional_properties}
 
     return abstract_type
-
 
 class BaseTypeExtractor(ABC):
     def __init__(self, config, fca_helper, graph_data, graph_type):

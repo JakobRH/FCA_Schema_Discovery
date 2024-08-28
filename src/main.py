@@ -27,6 +27,7 @@ def main():
     extractor = ExtractorFactory.get_extractor(config)
     extractor.extract_graph_data()
     graph_data = extractor.graph_data
+    graph_data.infer_property_data_types()
 
     # Step 2: Perform FCA
     node_fca_helper = FCAHelper(config)

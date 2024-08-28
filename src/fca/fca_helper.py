@@ -39,8 +39,8 @@ class FCAHelper:
         plt.savefig(self.config.get("out_dir") + "edge_concept_lattice.png")
 
     def _create_node_dataframe(self, graph_data):
-        nodes = graph_data.nodes
-        node_ids = [node.id for node in nodes]
+        nodes = list(graph_data.nodes.values())
+        node_ids = list(graph_data.nodes.keys())
 
         all_labels = sorted({label for node in nodes for label in node.labels})
         all_properties = sorted({key for node in nodes for key in node.properties.keys()})

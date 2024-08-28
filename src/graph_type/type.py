@@ -1,5 +1,5 @@
 class Type:
-    def __init__(self, config, concept_id, labels, properties, supertypes, subtypes, entity):
+    def __init__(self, config, concept_id, labels, properties, supertypes, subtypes, entity, is_abstract=False):
         self.config = config
         self.concept_id = concept_id
         self.labels = set(labels)
@@ -10,7 +10,7 @@ class Type:
         self.edges = set()
         self.supertypes = set(supertypes)
         self.subtypes = set(subtypes)
-        self.is_abstract = False
+        self.is_abstract = is_abstract
         self.entity = entity
         self.startpoint_types = set()
         self.endpoint_types = set()
@@ -86,16 +86,26 @@ class Type:
         return ":" + " | ".join(endpoints)
 
     def _generate_name(self):
-        name = "Abstract" if self.is_abstract else ""
+        if self.is_abstract:
+            name = "Abstract"
+            if self.entity == "NODE":
+                name += "NodeType" + "+".join(self.subtypes)
+            if self.entity == "EDGE":
+                name += "EdgeType" + "+".join(self.subtypes)
+            return name
         if self.entity == "NODE":
-            return name + "NodeType" + str(self.concept_id)
+            return "NodeType" + str(self.concept_id)
         if self.entity == "EDGE":
-            return name + "EdgeType" + str(self.concept_id)
+            return "EdgeType" + str(self.concept_id)
         return ""
 
     def remove_inherited_features(self, types):
+        supertypes = self._get_all_supertypes({type_.name: type_ for type_ in types})
+        for type_ in types:
+            print(type_.name, type_.labels, type_.properties, type_.optional_labels, type_.optional_properties)
+        print(self.name, self.supertypes)
         type_dict = {type_.name: type_ for type_ in types}
-        for supertype_name in self.supertypes:
+        for supertype_name in supertypes:
             supertype = type_dict.get(supertype_name)
             self.labels.difference_update(supertype.labels)
             self.optional_labels.difference_update(supertype.labels)
@@ -103,6 +113,9 @@ class Type:
             for key in list(self.properties.keys()):
                 if key in supertype.properties:
                     del self.properties[key]
+            for key in list(self.optional_properties.keys()):
+                if key in supertype.optional_properties:
+                    del self.optional_properties[key]
             if self.entity == "EDGE":
                 self.startpoint_types.difference_update(supertype.startpoint_types)
                 self.endpoint_types.difference_update(supertype.endpoint_types)
@@ -113,12 +126,23 @@ class Type:
         label_union = len(self.labels | other.labels)
         label_similarity = label_intersection / label_union if label_union != 0 else 0
 
+        # Compute Jaccard similarity for optional labels
+        optional_label_intersection = len(self.optional_labels & other.optional_labels)
+        optional_label_union = len(self.optional_labels | other.optional_labels)
+        optional_label_similarity = optional_label_intersection / optional_label_union if optional_label_union != 0 else 0
+
         # Compute Jaccard similarity for properties
         property_intersection = len(self.properties.keys() & other.properties.keys())
         property_union = len(self.properties.keys() | other.properties.keys())
         property_similarity = property_intersection / property_union if property_union != 0 else 0
 
-        return (label_similarity + property_similarity) / 2
+        # Compute Jaccard similarity for optional properties
+        optional_property_intersection = len(self.optional_properties.keys() & other.optional_properties.keys())
+        optional_property_union = len(self.optional_properties.keys() | other.optional_properties.keys())
+        optional_property_similarity = optional_property_intersection / optional_property_union if optional_property_union != 0 else 0
+
+        # Return the average of the four similarities
+        return (label_similarity + optional_label_similarity + property_similarity + optional_property_similarity) / 4
 
     def merge_with_supertype(self, supertype):
         # 1. Handle labels:
@@ -156,3 +180,10 @@ class Type:
 
         # Clear the subtype's subtypes after merging
         self.subtypes.clear()
+
+    def _get_all_supertypes(self, type_dict):
+        """Recursively get all transitive supertypes."""
+        all_supertypes = set(self.supertypes)
+        for supertype in self.supertypes:
+            all_supertypes.update(type_dict.get(supertype)._get_all_supertypes(type_dict))
+        return all_supertypes
