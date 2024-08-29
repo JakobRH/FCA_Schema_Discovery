@@ -68,7 +68,6 @@ def merge_types(config, types):
         subtype, supertype = best_pair
         subtype.merge_with_supertype(supertype)
 
-        print("SUBTYPE: " + subtype.name, subtype.labels, subtype.properties)
         # Step 4: Update relationships
         types.remove(subtype)
 
@@ -132,8 +131,8 @@ def _create_abstract_type(config, type1, type2):
     abstract_type.optional_labels = shared_optional_labels
     abstract_type.optional_properties = shared_optional_properties
 
-    type1.supertypes.add(abstract_type.concept_id)
-    type2.supertypes.add(abstract_type.concept_id)
+    type1.supertypes.add(abstract_type.name)
+    type2.supertypes.add(abstract_type.name)
 
     type1.labels.difference_update(shared_labels)
     type2.labels.difference_update(shared_labels)

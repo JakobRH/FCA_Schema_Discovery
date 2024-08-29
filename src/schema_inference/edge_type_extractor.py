@@ -26,8 +26,9 @@ class EdgeTypeExtractor(BaseTypeExtractor):
         self._compute_endpoints(types)
 
         if self.config.get("remove_inherited_features"):
+            type_dict = {type_.name: type_ for type_ in types}
             for type_ in types:
-                type_.remove_inherited_features(types)
+                type_.remove_inherited_features(type_dict)
 
         return types
 
@@ -42,8 +43,9 @@ class EdgeTypeExtractor(BaseTypeExtractor):
         self._compute_endpoints(types)
 
         if self.config.get("remove_inherited_features"):
+            type_dict = {type_.name: type_ for type_ in types}
             for type_ in types:
-                type_.remove_inherited_features(types)
+                type_.remove_inherited_features(type_dict)
 
         return types
 

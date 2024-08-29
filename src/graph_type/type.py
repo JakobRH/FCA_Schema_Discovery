@@ -37,14 +37,14 @@ class Type:
             raise ValueError("Unsupported type kind")
 
     def _to_node_schema(self):
-        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels else ""
-        properties_spec = f"{self._format_properties()}" if self.properties or self.optional_properties else ""
+        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
+        properties_spec = f" {self._format_properties()}" if self.properties or self.optional_properties else ""
         abstract = "ABSTRACT " if self.is_abstract else ""
-        open_labels = "OPEN " if self.config.get("optional_labels") else ""
-        return f"CREATE NODE TYPE {abstract} ({self.name} {labels_spec} {open_labels}{properties_spec});"
+        open_labels = " OPEN" if self.config.get("optional_labels") else ""
+        return f"CREATE NODE TYPE {abstract}({self.name}{labels_spec}{open_labels}{properties_spec});"
 
     def _to_edge_schema(self):
-        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels else ""
+        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
         properties_spec = f"{self._format_properties()}" if self.properties or self.optional_properties else ""
         middle_type = f"[{self.name} {labels_spec} {properties_spec}]"
         start_type = f"({self._format_endpoints(self.startpoint_types)})"
@@ -98,27 +98,6 @@ class Type:
         if self.entity == "EDGE":
             return "EdgeType" + str(self.concept_id)
         return ""
-
-    def remove_inherited_features(self, types):
-        supertypes = self._get_all_supertypes({type_.name: type_ for type_ in types})
-        for type_ in types:
-            print(type_.name, type_.labels, type_.properties, type_.optional_labels, type_.optional_properties)
-        print(self.name, self.supertypes)
-        type_dict = {type_.name: type_ for type_ in types}
-        for supertype_name in supertypes:
-            supertype = type_dict.get(supertype_name)
-            self.labels.difference_update(supertype.labels)
-            self.optional_labels.difference_update(supertype.labels)
-            self.supertypes.difference_update(supertype.supertypes)
-            for key in list(self.properties.keys()):
-                if key in supertype.properties:
-                    del self.properties[key]
-            for key in list(self.optional_properties.keys()):
-                if key in supertype.optional_properties:
-                    del self.optional_properties[key]
-            if self.entity == "EDGE":
-                self.startpoint_types.difference_update(supertype.startpoint_types)
-                self.endpoint_types.difference_update(supertype.endpoint_types)
 
     def jaccard_similarity(self, other):
         # Compute Jaccard similarity for labels
@@ -175,15 +154,35 @@ class Type:
         for key in supertype_only_properties:
             supertype.optional_properties[key] = supertype.properties[key]
 
+        supertype.nodes.update(self.nodes)
+        supertype.edges.update(self.edges)
+
         # Update the supertype's subtypes to include the subtype's subtypes
         supertype.subtypes.update(self.subtypes)
 
         # Clear the subtype's subtypes after merging
         self.subtypes.clear()
 
-    def _get_all_supertypes(self, type_dict):
+    def remove_inherited_features(self, type_dict):
+        supertypes = self.get_all_supertypes(type_dict)
+        for supertype_name in supertypes:
+            supertype = type_dict.get(supertype_name)
+            self.labels.difference_update(supertype.labels)
+            self.optional_labels.difference_update(supertype.labels)
+            self.supertypes.difference_update(supertype.supertypes)
+            for key in list(self.properties.keys()):
+                if key in supertype.properties:
+                    del self.properties[key]
+            for key in list(self.optional_properties.keys()):
+                if key in supertype.optional_properties:
+                    del self.optional_properties[key]
+            if self.entity == "EDGE":
+                self.startpoint_types.difference_update(supertype.startpoint_types)
+                self.endpoint_types.difference_update(supertype.endpoint_types)
+
+    def get_all_supertypes(self, type_dict):
         """Recursively get all transitive supertypes."""
         all_supertypes = set(self.supertypes)
         for supertype in self.supertypes:
-            all_supertypes.update(type_dict.get(supertype)._get_all_supertypes(type_dict))
+            all_supertypes.update(type_dict.get(supertype).get_all_supertypes(type_dict))
         return all_supertypes

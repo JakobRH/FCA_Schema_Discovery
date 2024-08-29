@@ -24,9 +24,11 @@ class NodeTypeExtractor(BaseTypeExtractor):
             types = merge_types(self.config, types)
 
         find_and_create_abstract_types(self.config, types)
+
         if self.config.get("remove_inherited_features"):
+            type_dict = {type_.name: type_ for type_ in types}
             for type_ in types:
-                type_.remove_inherited_features(types)
+                type_.remove_inherited_features(type_dict)
 
         return types
 
@@ -37,11 +39,12 @@ class NodeTypeExtractor(BaseTypeExtractor):
         if self.config.get("optional_properties"):
             types = merge_types(self.config, types)
 
-        #find_and_create_abstract_types(self.config, types)
+        find_and_create_abstract_types(self.config, types)
 
         if self.config.get("remove_inherited_features"):
+            type_dict = {type_.name: type_ for type_ in types}
             for type_ in types:
-                type_.remove_inherited_features(types)
+                type_.remove_inherited_features(type_dict)
 
         return types
 
