@@ -45,7 +45,7 @@ def conceptid_to_name_mapping(types):
     return {type_.concept_id: type_.name for type_ in types}
 
 
-def merge_types(config, types):
+def merge_hierarchy_related_types(config, types):
     while True:
         # Step 1: Calculate similarity between all sub/supertype pairs
         best_similarity = 0
@@ -149,6 +149,7 @@ def _create_abstract_type(config, type1, type2):
                                  k not in shared_optional_properties}
 
     return abstract_type
+
 
 class BaseTypeExtractor(ABC):
     def __init__(self, config, fca_helper, graph_data, graph_type):

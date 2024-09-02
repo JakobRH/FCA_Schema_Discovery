@@ -19,5 +19,8 @@
     "open_labels": true,
     "open_properties": true,
     "abstract_type_threshold": 0.5,
-    "remove_inherited_features": true
+    "remove_inherited_features": true,
+    "abstract_type_lookup": true,
+    "max_result_types": 10,
+    "max_types": false
 }

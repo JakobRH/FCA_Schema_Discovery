@@ -68,3 +68,27 @@ class GraphData:
             prop: Counter(types).most_common(1)[0][0]
             for prop, types in edge_property_data_type_dict.items()
         }
+
+    def get_all_node_labels(self):
+        unique_labels = set()
+        for node in self.nodes.values():
+            unique_labels.update(node.labels)
+        return unique_labels
+
+    def get_all_edge_labels(self):
+        unique_labels = set()
+        for edge in self.edges.values():
+            unique_labels.update(edge.labels)
+        return unique_labels
+
+    def get_all_node_properties(self):
+        unique_properties = set()
+        for node in self.nodes.values():
+            unique_properties.update(node.properties.keys())
+        return unique_properties
+
+    def get_all_edge_properties(self):
+        unique_properties = set()
+        for edge in self.edges.values():
+            unique_properties.update(edge.properties.keys())
+        return unique_properties

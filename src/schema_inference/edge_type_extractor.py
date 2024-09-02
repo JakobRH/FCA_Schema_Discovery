@@ -68,8 +68,7 @@ class EdgeTypeExtractor(BaseTypeExtractor):
             if concept_id == bottom_concept_id and remove_bottom_concept:
                 continue
 
-            labels = concept.intent if approach == 'label_based' else {}
-            properties = self._compute_property_data_types(concept.intent) if approach == 'property_based' else {}
+            labels, properties = self.set_lattice_intent(concept.intent, approach)
             edges = concept.extent
 
             subtypes, supertypes = self.fca_helper.get_edge_sub_super_concepts(concept_id)
@@ -193,4 +192,21 @@ class EdgeTypeExtractor(BaseTypeExtractor):
         for prop in properties:
             properties_dict[prop] = self.graph_data.edge_property_data_types[prop]
         return properties_dict
+
+    def set_lattice_intent(self, intent, approach):
+        labels = {}
+        properties = {}
+
+        if approach == "label_based":
+            labels = intent
+        if approach == "property_based":
+            properties = self._compute_property_data_types(intent)
+        if approach == "label_property_based":
+            all_labels = self.graph_type.get_all_edge_labels
+            for attribute in intent:
+                if attribute in all_labels:
+                    labels.update(attribute)
+                else:
+                    properties.update(attribute)
+        return labels, properties
 

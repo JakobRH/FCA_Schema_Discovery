@@ -49,7 +49,20 @@ class NodeTypeExtractor(BaseTypeExtractor):
         return types
 
     def _extract_label_property_based_types(self):
-        types = []
+        types = self._initialize_types()
+
+        if self.config.get("max_types"):
+            merge_types(self.config, types)
+        else:
+            merge_types(self.config, types)
+
+        find_and_create_abstract_types(self.config, types)
+
+        if self.config.get("remove_inherited_features"):
+            type_dict = {type_.name: type_ for type_ in types}
+            for type_ in types:
+                type_.remove_inherited_features(type_dict)
+
         return types
 
     def _initialize_types(self):
@@ -67,9 +80,7 @@ class NodeTypeExtractor(BaseTypeExtractor):
                 continue
             if concept_id == bottom_concept_id and remove_bottom_concept:
                 continue
-
-            labels = concept.intent if approach == 'label_based' else {}
-            properties = self._compute_property_data_types(concept.intent) if approach == 'property_based' else {}
+            labels, properties = self.set_lattice_intent(concept.intent, approach)
             nodes = concept.extent
 
             subtypes, supertypes = self.fca_helper.get_node_sub_super_concepts(concept_id)
@@ -131,3 +142,21 @@ class NodeTypeExtractor(BaseTypeExtractor):
         for prop in properties:
             properties_dict[prop] = self.graph_data.node_property_data_types[prop]
         return properties_dict
+
+    def set_lattice_intent(self, intent, approach):
+        labels = {}
+        properties = {}
+
+        if approach == "label_based":
+            labels = intent
+        if approach == "property_based":
+            properties = self._compute_property_data_types(intent)
+        if approach == "label_property_based":
+            all_labels = self.graph_type.get_all_node_labels
+            for attribute in intent:
+                if attribute in all_labels:
+                    labels.update(attribute)
+                else:
+                    properties.update(attribute)
+        return labels, properties
+

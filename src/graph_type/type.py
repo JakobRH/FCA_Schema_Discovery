@@ -157,6 +157,10 @@ class Type:
         supertype.nodes.update(self.nodes)
         supertype.edges.update(self.edges)
 
+        if self.entity == "EDGE":
+            supertype.startpoint_types.update(self.startpoint_types)
+            supertype.endpoint_types.update(self.endpoint_types)
+
         # Update the supertype's subtypes to include the subtype's subtypes
         supertype.subtypes.update(self.subtypes)
 
