@@ -6,8 +6,7 @@ from utils.logger import setup_logger
 from fca.fca_helper import FCAHelper
 from schema_inference.node_type_extractor import NodeTypeExtractor
 from schema_inference.edge_type_extractor import EdgeTypeExtractor
-from neo4j.time import Date, Time, DateTime, Duration
-from neo4j.spatial import Point
+
 
 def main():
     parser = argparse.ArgumentParser(description='Schema Extractor Tool')

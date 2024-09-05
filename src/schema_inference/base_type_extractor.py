@@ -45,7 +45,7 @@ def conceptid_to_name_mapping(types):
     return {type_.concept_id: type_.name for type_ in types}
 
 
-def merge_hierarchy_related_types(config, types):
+def merge_types(config, types):
     while True:
         # Step 1: Calculate similarity between all sub/supertype pairs
         best_similarity = 0
@@ -90,6 +90,10 @@ def merge_hierarchy_related_types(config, types):
 
 def find_and_create_abstract_types(config, types):
     created_abstract_types = []
+    supertypes_map = defaultdict(set)
+    type_dict = {type_.name: type_ for type_ in types}
+    for type_ in types:
+        supertypes_map[type_].update(type_.get_all_supertypes(type_dict))
 
     # Compare each pair of types
     for i in range(len(types)):
@@ -97,13 +101,15 @@ def find_and_create_abstract_types(config, types):
             type1 = types[i]
             type2 = types[j]
 
-            # Calculate similarity
-            similarity = type1.jaccard_similarity(type2)
+            if (type2 not in supertypes_map[type1] and
+                    type1 not in supertypes_map[type2]):
+                # Calculate similarity
+                similarity = type1.jaccard_similarity(type2)
 
-            # If similarity is above the threshold, create an abstract type
-            if similarity >= config.get("abstract_type_threshold"):
-                abstract_type = _create_abstract_type(config, type1, type2)
-                created_abstract_types.append(abstract_type)
+                # If similarity is above the threshold, create an abstract type
+                if similarity >= config.get("abstract_type_threshold"):
+                    abstract_type = _create_abstract_type(config, type1, type2)
+                    created_abstract_types.append(abstract_type)
 
     types.extend(created_abstract_types)
 

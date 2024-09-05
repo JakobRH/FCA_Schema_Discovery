@@ -50,7 +50,19 @@ class EdgeTypeExtractor(BaseTypeExtractor):
         return types
 
     def _extract_label_property_based_types(self):
-        pass
+        types = self._initialize_types()
+
+        if self.config.get("optional_labels") and self.config.get("optional_properties"):
+            types = merge_types(self.config, types)
+
+        self._compute_endpoints(types)
+
+        if self.config.get("remove_inherited_features"):
+            type_dict = {type_.name: type_ for type_ in types}
+            for type_ in types:
+                type_.remove_inherited_features(type_dict)
+
+        return types
 
     def _initialize_types(self):
         """Initialize types based on FCA lattice."""
@@ -108,10 +120,10 @@ class EdgeTypeExtractor(BaseTypeExtractor):
     def _compute_endpoints(self, edge_types):
         threshold = self.config.get("endpoint_outlier_threshold")
         # Step 1: Create a mapping from node IDs to their types
-        node_id_to_type = {}
+        node_id_to_types = defaultdict(set)
         for node_type in self.graph_type.node_types:
             for node_id in node_type.nodes:
-                node_id_to_type[node_id] = node_type.name
+                node_id_to_types[node_id].add(node_type.name)
 
         # Step 2: Initialize structures to hold the start and end point types
         edge_type_to_startpoint_types = defaultdict(Counter)
@@ -121,13 +133,15 @@ class EdgeTypeExtractor(BaseTypeExtractor):
         for edge_type in edge_types:
             for edge_id in edge_type.edges:
                 edge = self.graph_data.get_edge_by_id(edge_id)
-                start_node_type = node_id_to_type.get(edge.start_node_id)
-                end_node_type = node_id_to_type.get(edge.end_node_id)
+                start_node_types = node_id_to_types.get(edge.start_node_id)
+                end_node_types = node_id_to_types.get(edge.end_node_id)
 
-                if start_node_type:
-                    edge_type_to_startpoint_types[edge_type.name][start_node_type] += 1
-                if end_node_type:
-                    edge_type_to_endpoint_types[edge_type.name][end_node_type] += 1
+                if start_node_types:
+                    for type_ in start_node_types:
+                        edge_type_to_startpoint_types[edge_type.name][type_] += 1
+                if end_node_types:
+                    for type_ in end_node_types:
+                        edge_type_to_endpoint_types[edge_type.name][type_] += 1
 
         # Step 4: Assign the most frequent node types to the edge types based on the threshold
         for edge_type in edge_types:
@@ -187,6 +201,7 @@ class EdgeTypeExtractor(BaseTypeExtractor):
                     type_instance.labels.add(label)
                 elif count >= threshold:
                     type_instance.optional_labels.add(label)
+
     def _compute_property_data_types(self, properties):
         properties_dict = {}
         for prop in properties:
@@ -194,19 +209,21 @@ class EdgeTypeExtractor(BaseTypeExtractor):
         return properties_dict
 
     def set_lattice_intent(self, intent, approach):
-        labels = {}
-        properties = {}
+        labels = []
+        properties = []
 
         if approach == "label_based":
             labels = intent
+            properties = {}
         if approach == "property_based":
             properties = self._compute_property_data_types(intent)
         if approach == "label_property_based":
-            all_labels = self.graph_type.get_all_edge_labels
+            all_labels = self.graph_data.get_all_edge_labels()
             for attribute in intent:
                 if attribute in all_labels:
-                    labels.update(attribute)
+                    labels.append(attribute)
                 else:
-                    properties.update(attribute)
+                    properties.append(attribute)
+            properties = self._compute_property_data_types(properties)
         return labels, properties
 

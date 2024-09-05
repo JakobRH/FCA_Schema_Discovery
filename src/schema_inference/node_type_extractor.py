@@ -51,10 +51,8 @@ class NodeTypeExtractor(BaseTypeExtractor):
     def _extract_label_property_based_types(self):
         types = self._initialize_types()
 
-        if self.config.get("max_types"):
-            merge_types(self.config, types)
-        else:
-            merge_types(self.config, types)
+        if self.config.get("optional_labels") and self.config.get("optional_properties"):
+            types = merge_types(self.config, types)
 
         find_and_create_abstract_types(self.config, types)
 
@@ -144,19 +142,21 @@ class NodeTypeExtractor(BaseTypeExtractor):
         return properties_dict
 
     def set_lattice_intent(self, intent, approach):
-        labels = {}
-        properties = {}
+        labels = []
+        properties = []
 
         if approach == "label_based":
             labels = intent
+            properties = {}
         if approach == "property_based":
             properties = self._compute_property_data_types(intent)
         if approach == "label_property_based":
-            all_labels = self.graph_type.get_all_node_labels
+            all_labels = self.graph_data.get_all_node_labels()
             for attribute in intent:
                 if attribute in all_labels:
-                    labels.update(attribute)
+                    labels.append(attribute)
                 else:
                     properties.update(attribute)
+            properties = self._compute_property_data_types(properties)
         return labels, properties
 

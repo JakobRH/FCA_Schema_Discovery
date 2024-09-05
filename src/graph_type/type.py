@@ -41,7 +41,7 @@ class Type:
         properties_spec = f" {self._format_properties()}" if self.properties or self.optional_properties else ""
         abstract = "ABSTRACT " if self.is_abstract else ""
         open_labels = " OPEN" if self.config.get("optional_labels") else ""
-        return f"CREATE NODE TYPE {abstract}({self.name}{labels_spec}{open_labels}{properties_spec});"
+        return f"{abstract}({self.name}{labels_spec}{open_labels}{properties_spec}),"
 
     def _to_edge_schema(self):
         labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
@@ -50,7 +50,7 @@ class Type:
         start_type = f"({self._format_endpoints(self.startpoint_types)})"
         end_type = f"({self._format_endpoints(self.endpoint_types)})"
         abstract = "ABSTRACT " if self.is_abstract else ""
-        return f"CREATE EDGE TYPE {abstract}{start_type} - {middle_type} -> {end_type};"
+        return f"{abstract}{start_type} - {middle_type} -> {end_type},"
 
     def _format_labels(self):
         supertypes_and_labels = []
@@ -83,7 +83,7 @@ class Type:
     def _format_endpoints(self, endpoints):
         if not endpoints:
             return ""
-        return ":" + " | ".join(endpoints)
+        return ":" + "|".join(endpoints)
 
     def _generate_name(self):
         if self.is_abstract:
@@ -100,28 +100,36 @@ class Type:
         return ""
 
     def jaccard_similarity(self, other):
+        similarities = []
+
         # Compute Jaccard similarity for labels
         label_intersection = len(self.labels & other.labels)
         label_union = len(self.labels | other.labels)
         label_similarity = label_intersection / label_union if label_union != 0 else 0
+        similarities.append(label_similarity)
 
-        # Compute Jaccard similarity for optional labels
-        optional_label_intersection = len(self.optional_labels & other.optional_labels)
-        optional_label_union = len(self.optional_labels | other.optional_labels)
-        optional_label_similarity = optional_label_intersection / optional_label_union if optional_label_union != 0 else 0
+        # Compute Jaccard similarity for optional labels if either has optional labels
+        if self.optional_labels or other.optional_labels:
+            optional_label_intersection = len(self.optional_labels & other.optional_labels)
+            optional_label_union = len(self.optional_labels | other.optional_labels)
+            optional_label_similarity = optional_label_intersection / optional_label_union if optional_label_union != 0 else 0
+            similarities.append(optional_label_similarity)
 
         # Compute Jaccard similarity for properties
         property_intersection = len(self.properties.keys() & other.properties.keys())
         property_union = len(self.properties.keys() | other.properties.keys())
         property_similarity = property_intersection / property_union if property_union != 0 else 0
+        similarities.append(property_similarity)
 
-        # Compute Jaccard similarity for optional properties
-        optional_property_intersection = len(self.optional_properties.keys() & other.optional_properties.keys())
-        optional_property_union = len(self.optional_properties.keys() | other.optional_properties.keys())
-        optional_property_similarity = optional_property_intersection / optional_property_union if optional_property_union != 0 else 0
+        # Compute Jaccard similarity for optional properties if either has optional properties
+        if self.optional_properties or other.optional_properties:
+            optional_property_intersection = len(self.optional_properties.keys() & other.optional_properties.keys())
+            optional_property_union = len(self.optional_properties.keys() | other.optional_properties.keys())
+            optional_property_similarity = optional_property_intersection / optional_property_union if optional_property_union != 0 else 0
+            similarities.append(optional_property_similarity)
 
-        # Return the average of the four similarities
-        return (label_similarity + optional_label_similarity + property_similarity + optional_property_similarity) / 4
+        # Return the average of the computed similarities
+        return sum(similarities) / len(similarities)
 
     def merge_with_supertype(self, supertype):
         # 1. Handle labels:
