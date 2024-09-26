@@ -41,7 +41,7 @@ class Type:
         properties_spec = f" {self._format_properties()}" if self.properties or self.optional_properties else ""
         abstract = "ABSTRACT " if self.is_abstract else ""
         open_labels = " OPEN" if self.config.get("optional_labels") else ""
-        return f"{abstract}({self.name}{labels_spec}{open_labels}{properties_spec}),"
+        return f"{abstract}({self.name}{labels_spec}{open_labels}{properties_spec})"
 
     def _to_edge_schema(self):
         labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
@@ -50,7 +50,7 @@ class Type:
         start_type = f"({self._format_endpoints(self.startpoint_types)})"
         end_type = f"({self._format_endpoints(self.endpoint_types)})"
         abstract = "ABSTRACT " if self.is_abstract else ""
-        return f"{abstract}{start_type} - {middle_type} -> {end_type},"
+        return f"{abstract}{start_type} - {middle_type} -> {end_type}"
 
     def _format_labels(self):
         supertypes_and_labels = []

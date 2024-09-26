@@ -1,6 +1,7 @@
 import pandas as pd
 from fcapy.context import FormalContext
 from fcapy.lattice import ConceptLattice
+from concepts import Context
 import matplotlib
 
 matplotlib.use('TkAgg')

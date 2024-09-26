@@ -1,6 +1,8 @@
 from src.graph_extraction.extractor_factory import ExtractorFactory
 import argparse
 from config.config import Config
+from src.graph_generator.SchemaParser import SchemaParser
+from src.graph_generator.graph_generator import GraphGenerator
 from src.graph_type.graph_type import GraphType
 from utils.logger import setup_logger
 from fca.fca_helper import FCAHelper
@@ -23,19 +25,28 @@ def main():
     logger.info('Start Schmema Discovery.')
 
     # Step 1: Extract data
-    extractor = ExtractorFactory.get_extractor(config)
-    extractor.extract_graph_data()
-    graph_data = extractor.graph_data
+    # extractor = ExtractorFactory.get_extractor(config)
+    # extractor.extract_graph_data()
+    # graph_data = extractor.graph_data
+    schema_file_path = 'schema_examples/schema1.pgs'
+    with open(schema_file_path, 'r') as file:
+        schema_content = file.read()
+    schema_parser = SchemaParser(schema_content)
+    schema_parser.parse_schema()
+    graph_generator = GraphGenerator(schema_parser)
+    graph_data = graph_generator.generate_graph(1000, 10000)
+    print("1")
     graph_data.infer_property_data_types()
-
+    print("2")
     # Step 2: Perform FCA
     node_fca_helper = FCAHelper(config)
     graph_type = GraphType(config)
 
     node_fca_helper.generate_node_concept_lattice(graph_data)
+    print("3")
     node_type_extractor = NodeTypeExtractor(config, node_fca_helper, graph_data, graph_type)
     graph_type.node_types = node_type_extractor.extract_types()
-
+    print("4")
     node_fca_helper.generate_edge_concept_lattice(graph_data)
     edge_type_extractor = EdgeTypeExtractor(config, node_fca_helper, graph_data, graph_type)
     graph_type.edge_types = edge_type_extractor.extract_types()

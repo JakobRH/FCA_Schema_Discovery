@@ -1,0 +1,6 @@
+CREATE GRAPH TYPE FraudGraphType {
+  (PersonType: Person {name STRING, OPTIONAL birthday DATE}),
+  (CustomerType: PersonType & Customer & Gender? {c_id INTEGER}),
+  (AccountType: Account {acct_id INTEGER}),
+  (:PersonType|CustomerType)-[OwnsAccountType: owns & posses {since DATE, OPTIONAL amount FLOAT}]->(:AccountType)
+}

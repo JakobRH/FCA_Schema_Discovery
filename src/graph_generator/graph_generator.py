@@ -1,19 +1,21 @@
 import random
 import string
+from collections import defaultdict
 from datetime import date, timedelta, time, datetime
 
 from src.graph_data.graph_data import GraphData, Node, Edge
 
 
 class GraphGenerator:
-    def __init__(self, schema_parser):
-        self.schema_parser = schema_parser
+    def __init__(self, schema):
+        self.schema = schema
         self.graph_data = GraphData()
+        self.node_type_to_nodes = {}
 
     def _random_string(self, length=6):
         return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
-    def _random_value(self, data_type):
+    def _generate_random_value(self, data_type):
         if data_type == "STRING":
             return self._random_string()
         elif data_type == "INTEGER":
@@ -44,33 +46,83 @@ class GraphGenerator:
         else:
             return None
 
-    def generate_graph(self, num_nodes=10, num_edges=15):
-        for node_type_name, node_type in self.schema_parser.node_types.items():
+    def _get_random_node_from_type(self, node_type):
+        """Get a random node ID from nodes of a given node type."""
+        if node_type in self.node_type_to_nodes:
+            return random.choice(self.node_type_to_nodes[node_type])
+        return None
+
+    def generate_graph(self, min_number_of_elements, max_number_of_elements):
+        # Generate nodes based on node type definitions
+        for node_type_name, node_type_def in self.schema.node_types.items():
+            num_nodes = random.randint(min_number_of_elements, max_number_of_elements)
+            self.node_type_to_nodes[node_type_name] = []
             for _ in range(num_nodes):
-                node_id = self._random_string()
-                labels = node_type.get('labels', [])
-                properties = {
-                    prop['key']: self._random_value(prop['type'])
-                    for prop in node_type.get('properties', [])
-                }
-                node = Node(node_id, labels, properties)
+                node_id = f"node_{len(self.graph_data.nodes) + 1}"
+                labels = node_type_def["labels"]
+
+                # Randomly include optional labels
+                for opt_label in node_type_def.get("optional_labels", []):
+                    if random.choice([True, False]):
+                        labels.append(opt_label)
+
+                properties = {}
+
+                # Add mandatory properties
+                for prop_name, prop_type in node_type_def.get("properties", {}).items():
+                    properties[prop_name] = self._generate_random_value(prop_type)
+
+                # Optionally add optional properties
+                for prop_name, prop_type in node_type_def.get("optional_properties", {}).items():
+                    if random.choice([True, False]):
+                        properties[prop_name] = self._generate_random_value(prop_type)
+
+                # Create and add the node to the graph
+                node = Node(node_id, labels=labels, properties=properties)
                 self.graph_data.add_node(node)
+                self.node_type_to_nodes[node_type_name].append(node_id)
 
-        # Generate edges
-        for edge_type_name, edge_type in self.schema_parser.edge_types.items():
+        # Generate edges based on edge type definitions
+        for edge_type_name, edge_type_def in self.schema.edge_types.items():
+            num_edges = random.randint(min_number_of_elements, max_number_of_elements)
+
             for _ in range(num_edges):
-                edge_id = self._random_string()
-                start_node = random.choice(list(self.graph_data.nodes.values()))
-                end_node = random.choice(list(self.graph_data.nodes.values()))
-                labels = edge_type.get('labels', [])
-                properties = {
-                    prop['key']: self._random_value(prop['type'])
-                    for prop in edge_type.get('properties', [])
-                }
-                edge = Edge(edge_id, start_node.id, end_node.id, labels, properties)
-                self.graph_data.add_edge(edge)
+                edge_id = f"edge_{len(self.graph_data.edges) + 1}"
 
-        # Infer global property data types after graph generation
-        self.graph_data.infer_property_data_types()
+                # Choose random start and end nodes that match the edge's endpoint types
+                start_node_type_options = edge_type_def["start_node_types"]
+                end_node_type_options = edge_type_def["end_node_types"]
+
+                start_node_id = None
+                while not start_node_id:
+                    start_node_type = random.choice(start_node_type_options)
+                    start_node_id = self._get_random_node_from_type(start_node_type)
+
+                end_node_id = None
+                while not end_node_id:
+                    end_node_type = random.choice(end_node_type_options)
+                    end_node_id = self._get_random_node_from_type(end_node_type)
+
+                labels = edge_type_def["labels"]
+
+                # Randomly include optional labels
+                for opt_label in edge_type_def.get("optional_labels", []):
+                    if random.choice([True, False]):
+                        labels.append(opt_label)
+
+                properties = {}
+
+                # Add mandatory properties
+                for prop_name, prop_type in edge_type_def.get("properties", {}).items():
+                    properties[prop_name] = self._generate_random_value(prop_type)
+
+                # Optionally add optional properties
+                for prop_name, prop_type in edge_type_def.get("optional_properties", {}).items():
+                    if random.choice([True, False]):
+                        properties[prop_name] = self._generate_random_value(prop_type)
+
+                # Create and add the edge to the graph
+                edge = Edge(edge_id, start_node_id, end_node_id, labels=labels, properties=properties)
+                self.graph_data.add_edge(edge)
 
         return self.graph_data
