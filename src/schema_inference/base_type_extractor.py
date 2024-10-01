@@ -87,6 +87,64 @@ def merge_types(config, types):
 
     return types
 
+def max_types_merge(config, types):
+    max_types = config.get("max_result_types")
+    supertypes = [t for t in types if not t.supertypes]
+    result_types = gather_subtypes(supertypes, types, max_types)
+    for type_ in result_types:
+        print(type_.concept_id)
+    while len(types) > max_types:
+        for type_ in types:
+            if not type_ in result_types:
+                best_similarity = 0
+                best_pair = None
+                for supertype_name in type_.supertypes:
+                    supertype = next((t for t in types if t.name == supertype_name), None)
+                    if supertype:
+                        similarity = type_.jaccard_similarity(supertype)
+                        if similarity > best_similarity:
+                            best_similarity = similarity
+                            best_pair = (type_, supertype)
+
+                subtype, supertype = best_pair
+                subtype.merge_with_supertype(supertype)
+
+                # Step 4: Update relationships
+                types.remove(subtype)
+
+                for type_ in types:
+                    # Update all references to sub1 in other types' supertypes lists
+                    if subtype.name in type_.supertypes:
+                        type_.supertypes.remove(subtype.name)
+                        type_.supertypes.add(supertype.name)
+
+                    # Remove references to sub2 in all types' supertypes lists
+                    if supertype.name in type_.supertypes:
+                        type_.supertypes.remove(supertype.name)
+
+                    # Remove references to sub1 in all types' subtypes lists
+                    if subtype.name in type_.subtypes:
+                        type_.subtypes.remove(subtype.name)
+    return types
+
+def gather_subtypes(supertypes, types, max_types):
+    result = []  # List to store the types
+    queue = supertypes  # Initialize the queue with the start type
+
+    # Create a mapping from type name to the actual type object
+    name_to_type = {t.name: t for t in types}
+
+    while queue and len(result) <= max_types:
+        current_type = queue.pop(0)
+        if current_type not in result:
+            result.append(current_type)
+
+        for subtype_name in current_type.subtypes:
+            subtype = name_to_type[subtype_name]
+            if len(result) < max_types:
+                queue.append(subtype)
+
+    return result
 
 def find_and_create_abstract_types(config, types):
     created_abstract_types = []

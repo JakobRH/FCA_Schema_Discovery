@@ -1,5 +1,5 @@
 from .base_type_extractor import BaseTypeExtractor, change_references, merge_types, \
-    find_and_create_abstract_types
+    find_and_create_abstract_types, max_types_merge
 from src.graph_type.type import Type
 from collections import defaultdict, Counter
 
@@ -21,9 +21,12 @@ class NodeTypeExtractor(BaseTypeExtractor):
         self._compute_properties(types)
 
         if self.config.get("optional_labels"):
+            if self.config.get("max_types") and len(types) > self.config.get("max_types"):
+                types = max_types_merge(self.config, types)
             types = merge_types(self.config, types)
 
-        find_and_create_abstract_types(self.config, types)
+        if self.config.get("abstract_type_lookup"):
+            find_and_create_abstract_types(self.config, types)
 
         if self.config.get("remove_inherited_features"):
             type_dict = {type_.name: type_ for type_ in types}
@@ -37,9 +40,12 @@ class NodeTypeExtractor(BaseTypeExtractor):
         self._compute_labels(types)
 
         if self.config.get("optional_properties"):
+            if self.config.get("max_types") and len(types) > self.config.get("max_types"):
+                types = max_types_merge(self.config, types)
             types = merge_types(self.config, types)
 
-        find_and_create_abstract_types(self.config, types)
+        if self.config.get("abstract_type_lookup"):
+            find_and_create_abstract_types(self.config, types)
 
         if self.config.get("remove_inherited_features"):
             type_dict = {type_.name: type_ for type_ in types}
@@ -52,9 +58,12 @@ class NodeTypeExtractor(BaseTypeExtractor):
         types = self._initialize_types()
 
         if self.config.get("optional_labels") and self.config.get("optional_properties"):
+            if self.config.get("max_types") and len(types) > self.config.get("max_types"):
+                types = max_types_merge(self.config, types)
             types = merge_types(self.config, types)
 
-        find_and_create_abstract_types(self.config, types)
+        if self.config.get("abstract_type_lookup"):
+            find_and_create_abstract_types(self.config, types)
 
         if self.config.get("remove_inherited_features"):
             type_dict = {type_.name: type_ for type_ in types}

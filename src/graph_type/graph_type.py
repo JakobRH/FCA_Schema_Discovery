@@ -23,7 +23,19 @@ class GraphType:
                 schema += "\n"
         schema = schema + "}"
 
-        out_file = self.config.get("out_dir") + "schema.txt"
-        with open(out_file, 'w') as file:
+        schema_out_file = self.config.get("out_dir") + "schema.txt"
+        with open(schema_out_file, 'w') as file:
             file.write(schema)
+
+        nodes_and_edges = "NODETYPES:\n"
+        for node_type in enumerate(self.node_types):
+            nodes_and_edges += f"Node Type: {node_type.name}\n"
+            nodes_and_edges += ", ".join([str(node) for node in node_type.nodes])
+        nodes_and_edges = "EDGETYPES:\n"
+        for edge_type in enumerate(self.edge_types):
+            nodes_and_edges += f"Node Type: {edge_type.name}\n"
+            nodes_and_edges += ", ".join([str(edge) for edge in edge_type.edges])
+        nodes_edges_file = self.config.get("out_dir") + "nodes_and_edges.txt"
+        with open(nodes_edges_file, 'w') as file:
+            file.write(nodes_and_edges)
         return schema

@@ -1,7 +1,6 @@
 import pandas as pd
 from fcapy.context import FormalContext
 from fcapy.lattice import ConceptLattice
-from concepts import Context
 import matplotlib
 
 matplotlib.use('TkAgg')
@@ -21,6 +20,7 @@ class FCAHelper:
         node_data = self._create_node_dataframe(graph_data)
         self.node_context = FormalContext.from_pandas(node_data)
         self.node_concept_lattice = ConceptLattice.from_context(self.node_context)
+
         fig, ax = plt.subplots(figsize=(10, 5))
         vsl = LineVizNx()
         vsl.draw_concept_lattice(self.node_concept_lattice, ax=ax, flg_node_indices=True)
@@ -32,6 +32,7 @@ class FCAHelper:
         edge_data = self._create_edge_dataframe(graph_data)
         self.edge_context = FormalContext.from_pandas(edge_data)
         self.edge_concept_lattice = ConceptLattice.from_context(self.edge_context)
+
         fig, ax = plt.subplots(figsize=(10, 5))
         vsl = LineVizNx()
         vsl.draw_concept_lattice(self.edge_concept_lattice, ax=ax, flg_node_indices=True)
@@ -41,7 +42,6 @@ class FCAHelper:
 
     def _create_node_dataframe(self, graph_data):
         nodes = list(graph_data.nodes.values())
-        node_ids = list(graph_data.nodes.keys())
 
         all_labels = sorted({label for node in nodes for label in node.labels})
         all_properties = sorted({key for node in nodes for key in node.properties.keys()})
@@ -57,21 +57,27 @@ class FCAHelper:
         else:
             raise ValueError("extraction_mode must be 'label_based', 'property_based', or 'label_property_based'")
 
-        df = pd.DataFrame(False, index=node_ids, columns=columns)
+        data = {}
 
         for node in nodes:
+            node_data = {}
+
             if extraction_mode == "label_based" or extraction_mode == "label_property_based":
                 for label in node.labels:
-                    df.at[node.id, label] = True
+                    node_data[label] = True
+
             if extraction_mode == "property_based" or extraction_mode == "label_property_based":
-                for key, value in node.properties.items():
-                    df.at[node.id, key] = True
+                for key in node.properties.keys():
+                    node_data[key] = True
+
+            data[node.id] = node_data
+
+        df = pd.DataFrame.from_dict(data, orient='index').fillna(False)
 
         return df
 
     def _create_edge_dataframe(self, graph_data):
         edges = graph_data.edges.values()
-        edge_ids = list(graph_data.edges.keys())
 
         all_labels = sorted({label for edge in edges for label in edge.labels})
         all_properties = sorted({key for edge in edges for key in edge.properties.keys()})
@@ -86,16 +92,22 @@ class FCAHelper:
             columns = all_labels + all_properties
         else:
             raise ValueError("extraction_mode must be 'label_based', 'property_based', or 'label_property_based'")
-
-        df = pd.DataFrame(False, index=edge_ids, columns=columns)
+        data = {}
 
         for edge in edges:
+            edge_data = {}
+
             if extraction_mode == "label_based" or extraction_mode == "label_property_based":
                 for label in edge.labels:
-                    df.at[edge.id, label] = True
+                    edge_data[label] = True
+
             if extraction_mode == "property_based" or extraction_mode == "label_property_based":
-                for key, value in edge.properties.items():
-                    df.at[edge.id, key] = True
+                for key in edge.properties.keys():
+                    edge_data[key] = True
+
+            data[edge.id] = edge_data
+
+        df = pd.DataFrame.from_dict(data, orient='index').fillna(False)
 
         return df
 

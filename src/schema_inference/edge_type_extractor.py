@@ -1,6 +1,6 @@
 from collections import defaultdict, Counter
 
-from .base_type_extractor import BaseTypeExtractor, change_references, merge_types
+from .base_type_extractor import BaseTypeExtractor, change_references, merge_types, max_types_merge
 from src.graph_type.type import Type
 
 class EdgeTypeExtractor(BaseTypeExtractor):
@@ -21,6 +21,8 @@ class EdgeTypeExtractor(BaseTypeExtractor):
         self._compute_properties(types)
 
         if self.config.get("optional_labels"):
+            if self.config.get("max_types") and len(types) > self.config.get("max_types"):
+                types = max_types_merge(self.config, types)
             types = merge_types(self.config, types)
 
         self._compute_endpoints(types)
@@ -38,6 +40,8 @@ class EdgeTypeExtractor(BaseTypeExtractor):
         self._compute_labels(types)
 
         if self.config.get("optional_properties"):
+            if self.config.get("max_types") and len(types) > self.config.get("max_types"):
+                types = max_types_merge(self.config, types)
             types = merge_types(self.config, types)
 
         self._compute_endpoints(types)
@@ -53,6 +57,8 @@ class EdgeTypeExtractor(BaseTypeExtractor):
         types = self._initialize_types()
 
         if self.config.get("optional_labels") and self.config.get("optional_properties"):
+            if self.config.get("max_types") and len(types) > self.config.get("max_types"):
+                types = max_types_merge(self.config, types)
             types = merge_types(self.config, types)
 
         self._compute_endpoints(types)

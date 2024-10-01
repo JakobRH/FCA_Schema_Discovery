@@ -5,8 +5,8 @@
         "username": "neo4j",
         "password": "password"
     },
-    "node_type_extraction": "label_based",
-    "edge_type_extraction":"label_based",
+    "node_type_extraction": "property_based",
+    "edge_type_extraction":"property_based",
     "out_dir": "..\\results\\",
     "optional_labels": true,
     "optional_properties": true,
@@ -22,5 +22,5 @@
     "remove_inherited_features": true,
     "abstract_type_lookup": true,
     "max_result_types": 10,
-    "max_types": false
+    "max_types": true
 }
