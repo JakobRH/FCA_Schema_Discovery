@@ -1,3 +1,6 @@
+import json
+
+
 class GraphType:
     def __init__(self, config):
         self.config = config
@@ -27,15 +30,29 @@ class GraphType:
         with open(schema_out_file, 'w') as file:
             file.write(schema)
 
-        nodes_and_edges = "NODETYPES:\n"
-        for node_type in enumerate(self.node_types):
-            nodes_and_edges += f"Node Type: {node_type.name}\n"
-            nodes_and_edges += ", ".join([str(node) for node in node_type.nodes])
-        nodes_and_edges = "EDGETYPES:\n"
-        for edge_type in enumerate(self.edge_types):
-            nodes_and_edges += f"Node Type: {edge_type.name}\n"
-            nodes_and_edges += ", ".join([str(edge) for edge in edge_type.edges])
-        nodes_edges_file = self.config.get("out_dir") + "nodes_and_edges.txt"
+        nodes_and_edges = {
+            "node_types": [],
+            "edge_types": []
+        }
+
+        # Add node types and their nodes
+        for node_type in self.node_types:
+            nodes_and_edges["node_types"].append({
+                "name": node_type.name,
+                "nodes": [str(node) for node in node_type.nodes]
+            })
+
+        # Add edge types and their edges
+        for edge_type in self.edge_types:
+            nodes_and_edges["edge_types"].append({
+                "name": edge_type.name,
+                "edges": [str(edge) for edge in edge_type.edges]
+            })
+
+        # Specify the output file path
+        nodes_edges_file = self.config.get("out_dir") + "nodes_and_edges.json"
+
+        # Write the dictionary to the JSON file
         with open(nodes_edges_file, 'w') as file:
-            file.write(nodes_and_edges)
+            json.dump(nodes_and_edges, file, indent=4)
         return schema

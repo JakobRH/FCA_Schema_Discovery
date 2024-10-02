@@ -81,7 +81,6 @@ class NodeTypeExtractor(BaseTypeExtractor):
         bottom_concept_id = num_concepts - 1
         remove_top_concept = True if not self.fca_helper.node_concept_lattice[top_concept_id].intent else False
         remove_bottom_concept = True if not self.fca_helper.node_concept_lattice[bottom_concept_id].extent else False
-
         for concept_id, concept in enumerate(self.fca_helper.node_concept_lattice):
             if concept_id == top_concept_id and remove_top_concept:
                 continue
@@ -165,7 +164,7 @@ class NodeTypeExtractor(BaseTypeExtractor):
                 if attribute in all_labels:
                     labels.append(attribute)
                 else:
-                    properties.update(attribute)
+                    properties.append(attribute)
             properties = self._compute_property_data_types(properties)
         return labels, properties
 

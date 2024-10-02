@@ -145,22 +145,20 @@ class Type:
         # Unique labels from subtype become optional in supertype
         supertype.optional_labels.update(subtype_only_labels)
         supertype.optional_labels.update(supertype_only_labels)
+        supertype.optional_labels.update(self.optional_labels)
 
-        # 2. Handle properties:
-        # - Properties common to both stay as normal properties
-        # - Properties unique to subtype or supertype become optional in supertype
         common_properties = self.properties.keys() & supertype.properties.keys()
         subtype_only_properties = self.properties.keys() - supertype.properties.keys()
         supertype_only_properties = supertype.properties.keys() - self.properties.keys()
 
-        # Common properties remain as normal
-        supertype.properties = {key: self.properties[key] for key in common_properties}
-
-        # Unique properties from subtype become optional in supertype
         for key in subtype_only_properties:
             supertype.optional_properties[key] = self.properties[key]
         for key in supertype_only_properties:
             supertype.optional_properties[key] = supertype.properties[key]
+        for key in self.optional_properties:
+            supertype.optional_properties[key] = self.optional_properties[key]
+
+        supertype.properties = {key: self.properties[key] for key in common_properties}
 
         supertype.nodes.update(self.nodes)
         supertype.edges.update(self.edges)

@@ -5,8 +5,10 @@
         "username": "neo4j",
         "password": "password"
     },
-    "node_type_extraction": "property_based",
-    "edge_type_extraction":"property_based",
+    "graph_generator": false,
+    "graph_generator_schema_path": "schema_examples/schema1.pgs",
+    "node_type_extraction": "label_based",
+    "edge_type_extraction":"label_based",
     "out_dir": "..\\results\\",
     "optional_labels": true,
     "optional_properties": true,
@@ -22,5 +24,6 @@
     "remove_inherited_features": true,
     "abstract_type_lookup": true,
     "max_result_types": 10,
-    "max_types": true
+    "max_types": true,
+    "validate_graph":  true
 }

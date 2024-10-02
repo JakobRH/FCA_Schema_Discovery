@@ -4,6 +4,7 @@ from config.config import Config
 from src.graph_generator.SchemaParser import SchemaParser
 from src.graph_generator.graph_generator import GraphGenerator
 from src.graph_type.graph_type import GraphType
+from src.utils.validator import Validator
 from utils.logger import setup_logger
 from fca.fca_helper import FCAHelper
 from schema_inference.node_type_extractor import NodeTypeExtractor
@@ -25,16 +26,18 @@ def main():
     logger.info('Start Schmema Discovery.')
 
     # Step 1: Extract data
-    extractor = ExtractorFactory.get_extractor(config)
-    extractor.extract_graph_data()
-    graph_data = extractor.graph_data
-    #schema_file_path = 'schema_examples/schema1.pgs'
-    #with open(schema_file_path, 'r') as file:
-    #    schema_content = file.read()
-    #schema_parser = SchemaParser(schema_content)
-    #schema_parser.parse_schema()
-    #graph_generator = GraphGenerator(schema_parser)
-    #graph_data = graph_generator.generate_graph(10000, 100000)
+    if config.get("data_generator"):
+        schema_file_path = config.get("graph_generator_schema_path")
+        with open(schema_file_path, 'r') as file:
+            schema_content = file.read()
+        schema_parser = SchemaParser(schema_content)
+        schema_parser.parse_schema()
+        graph_generator = GraphGenerator(schema_parser)
+        graph_data = graph_generator.generate_graph(10000, 100000)
+    else:
+        extractor = ExtractorFactory.get_extractor(config)
+        extractor.extract_graph_data()
+        graph_data = extractor.graph_data
 
     graph_data.infer_property_data_types()
 
@@ -52,6 +55,10 @@ def main():
 
     # Step 4: Create schema
     graph_type.create_schema()
+
+    if config.get("validate_graph"):
+        validator = Validator(graph_data, graph_type.node_types, graph_type.edge_types, config)
+        validator.validate_graph()
 
     logger.info('Schema extraction completed successfully.')
 

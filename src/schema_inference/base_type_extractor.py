@@ -45,6 +45,37 @@ def conceptid_to_name_mapping(types):
     return {type_.concept_id: type_.name for type_ in types}
 
 
+def find_most_similar_supertype(subtype, types):
+    """ Find the most similar supertype for a given subtype. """
+    best_similarity = -1
+    best_supertype = None
+    for supertype_name in subtype.supertypes:
+        supertype = next((t for t in types if t.name == supertype_name), None)
+        if supertype:
+            similarity = subtype.jaccard_similarity(supertype)
+            if similarity > best_similarity:
+                best_similarity = similarity
+                best_supertype = supertype
+    return subtype, best_supertype
+
+def merge(subtype, supertype, types):
+    supertype.merge_with_supertype(subtype)
+    types.remove(subtype)  # Remove the merged subtype from the types list
+    # Update relationships in the remaining types
+    for type_ in types:
+        # Update supertype references
+        if subtype.name in type_.supertypes:
+            type_.supertypes.remove(subtype.name)
+            type_.supertypes.add(supertype.name)
+        # Update subtype references
+        if supertype.name in type_.supertypes:
+            type_.supertypes.remove(supertype.name)
+
+        # Remove references to sub1 in all types' subtypes lists
+        if subtype.name in type_.subtypes:
+            type_.subtypes.remove(subtype.name)
+
+
 def merge_types(config, types):
     while True:
         # Step 1: Calculate similarity between all sub/supertype pairs
@@ -52,13 +83,7 @@ def merge_types(config, types):
         best_pair = None
 
         for type_ in types:
-            for supertype_name in type_.supertypes:
-                supertype = next((t for t in types if t.name == supertype_name), None)
-                if supertype:
-                    similarity = type_.jaccard_similarity(supertype)
-                    if similarity > best_similarity:
-                        best_similarity = similarity
-                        best_pair = (type_, supertype)
+            best_pair = find_most_similar_supertype(type_, types)
 
         # Step 2: If the best similarity is below the threshold, stop
         if best_pair is None or best_similarity < config.get("label_based_merge_threshold"):
@@ -66,85 +91,48 @@ def merge_types(config, types):
 
         # Step 3: Merge the most similar pair
         subtype, supertype = best_pair
-        subtype.merge_with_supertype(supertype)
-
-        # Step 4: Update relationships
-        types.remove(subtype)
-
-        for type_ in types:
-            # Update all references to sub1 in other types' supertypes lists
-            if subtype.name in type_.supertypes:
-                type_.supertypes.remove(subtype.name)
-                type_.supertypes.add(supertype.name)
-
-            # Remove references to sub2 in all types' supertypes lists
-            if supertype.name in type_.supertypes:
-                type_.supertypes.remove(supertype.name)
-
-            # Remove references to sub1 in all types' subtypes lists
-            if subtype.name in type_.subtypes:
-                type_.subtypes.remove(subtype.name)
+        merge(subtype, supertype, types)
 
     return types
 
 def max_types_merge(config, types):
     max_types = config.get("max_result_types")
-    supertypes = [t for t in types if not t.supertypes]
-    result_types = gather_subtypes(supertypes, types, max_types)
-    for type_ in result_types:
-        print(type_.concept_id)
     while len(types) > max_types:
-        for type_ in types:
-            if not type_ in result_types:
-                best_similarity = 0
-                best_pair = None
-                for supertype_name in type_.supertypes:
-                    supertype = next((t for t in types if t.name == supertype_name), None)
-                    if supertype:
-                        similarity = type_.jaccard_similarity(supertype)
-                        if similarity > best_similarity:
-                            best_similarity = similarity
-                            best_pair = (type_, supertype)
+        merged = False  # Flag to check if any merge happens in the iteration
 
-                subtype, supertype = best_pair
-                subtype.merge_with_supertype(supertype)
+        # Start from the end of the types list and try to merge each type with its most similar supertype
+        for type_ in reversed(types):
+            if type_.supertypes:
+                # Find the most similar supertype
+                subtype, best_supertype = find_most_similar_supertype(type_, types)
+                if best_supertype:
+                    # Perform the merge
+                    merge(subtype, best_supertype, types)
+                    merged = True
+                    break  # We can break since we modified the list and want to recheck from the end
 
-                # Step 4: Update relationships
-                types.remove(subtype)
+        # If no types were merged in the previous step, stop merging
+        if not merged:
+            break
 
-                for type_ in types:
-                    # Update all references to sub1 in other types' supertypes lists
-                    if subtype.name in type_.supertypes:
-                        type_.supertypes.remove(subtype.name)
-                        type_.supertypes.add(supertype.name)
+    while len(types) > max_types:
+        # Find the most similar pair of types without supertypes
+        best_similarity = -1
+        best_pair = None
+        for i in range(len(types)):
+            for j in range(i + 1, len(types)):
+                type1 = types[i]
+                type2 = types[j]
+                similarity = type1.jaccard_similarity(type2)
+                if similarity > best_similarity:
+                    best_similarity = similarity
+                    best_pair = (type1, type2)
 
-                    # Remove references to sub2 in all types' supertypes lists
-                    if supertype.name in type_.supertypes:
-                        type_.supertypes.remove(supertype.name)
+        if best_pair:
+            subtype, supertype = best_pair
+            merge(subtype, supertype, types)
 
-                    # Remove references to sub1 in all types' subtypes lists
-                    if subtype.name in type_.subtypes:
-                        type_.subtypes.remove(subtype.name)
     return types
-
-def gather_subtypes(supertypes, types, max_types):
-    result = []  # List to store the types
-    queue = supertypes  # Initialize the queue with the start type
-
-    # Create a mapping from type name to the actual type object
-    name_to_type = {t.name: t for t in types}
-
-    while queue and len(result) <= max_types:
-        current_type = queue.pop(0)
-        if current_type not in result:
-            result.append(current_type)
-
-        for subtype_name in current_type.subtypes:
-            subtype = name_to_type[subtype_name]
-            if len(result) < max_types:
-                queue.append(subtype)
-
-    return result
 
 def find_and_create_abstract_types(config, types):
     created_abstract_types = []
