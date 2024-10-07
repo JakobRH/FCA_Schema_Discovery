@@ -1,12 +1,20 @@
 import re
 
 class SchemaParser:
+    """
+    Parses a simplified version of the PG Schema and creates types instances.
+    """
     def __init__(self, schema_text):
         self.schema_text = schema_text
         self.node_types = {}
         self.edge_types = {}
 
     def parse_schema(self):
+        """
+        Parses the schema text to extract node and edge type definitions.
+
+        :raises ValueError: If the schema format is invalid.
+        """
         schema_body = self.schema_text.strip()
         graph_type_match = re.match(r"CREATE GRAPH TYPE\s+(\w+)\s*{", schema_body)
         if not graph_type_match:
@@ -29,12 +37,30 @@ class SchemaParser:
         self._resolve_supertypes()
 
     def _is_node_type_definition(self, definition):
+        """
+        Checks if a definition corresponds to a node type.
+
+        :param definition: A string representing a schema definition.
+        :return: True if the definition is for a node type, False otherwise.
+        """
         return definition.startswith("(") and not "-[" in definition
 
     def _is_edge_type_definition(self, definition):
+        """
+       Checks if a definition corresponds to an edge type.
+
+       :param definition: A string representing a schema definition.
+       :return: True if the definition is for an edge type, False otherwise.
+       """
         return "-[" in definition and "]->" in definition
 
     def _parse_node_type(self, definition):
+        """
+        Parses a node type definition and extracts its name, labels, supertypes, and properties.
+
+        :param definition: A string representing a node type definition.
+        :raises ValueError: If the node type definition format is invalid.
+        """
         node_pattern = r'\(\s*([A-Za-z0-9_]+)\s*:\s*([A-Za-z0-9_&?\s]*)\s*(\{.*?\})?\s*\)'
         match = re.match(node_pattern, definition)
         if not match:
@@ -53,6 +79,12 @@ class SchemaParser:
         }
 
     def _parse_edge_type(self, definition):
+        """
+        Parses an edge type definition and extracts its name, labels, supertypes, start/end node types, and properties.
+
+        :param definition: A string representing an edge type definition.
+        :raises ValueError: If the edge type definition format is invalid.
+        """
         edge_pattern = r'\(\s*:([A-Za-z0-9_|\s]*)\)\s*-\[(\w+)\s*:\s*([A-Za-z0-9_&?\s]*)\s*(\{.*?\})?\s*\]->\(\s*:([A-Za-z0-9_|\s]*)\)\s*'
         match = re.match(edge_pattern, definition)
         if not match:
@@ -76,6 +108,12 @@ class SchemaParser:
         }
 
     def _parse_supertypes_and_labels(self, part):
+        """
+        Parses a string to extract supertypes, mandatory labels, and optional labels.
+
+        :param part: A string containing the supertypes and labels.
+        :return: A tuple (supertypes, labels) where labels is a dictionary with 'mandatory' and 'optional' keys.
+        """
         supertypes = []
         labels = {'mandatory': [], 'optional': []}
 
@@ -103,6 +141,12 @@ class SchemaParser:
         return supertypes, labels
 
     def _parse_properties(self, properties_str):
+        """
+        Parses the properties string and separates mandatory and optional properties.
+
+        :param properties_str: A string containing the properties defined in a node or edge.
+        :return: A dictionary with 'mandatory' and 'optional' keys, each containing properties.
+        """
         properties = {'mandatory': {}, 'optional': {}}
         if properties_str:
             properties_str = properties_str.strip('{} ')
@@ -117,15 +161,24 @@ class SchemaParser:
         return properties
 
     def _resolve_supertypes(self):
-        # Resolve supertypes for node types
+        """
+        Resolves inherited properties and labels for node and edge types based on their supertypes.
+        """
         for node_type_name in self.node_types:
             self._resolve_node_type(node_type_name)
 
-        # Resolve supertypes for edge types
         for edge_type_name in self.edge_types:
             self._resolve_edge_type(edge_type_name)
 
     def _resolve_node_type(self, node_type_name):
+        """
+        Recursively resolves the inheritance for a node type, consolidating properties and labels
+        from its supertypes. The method ensures that the node type includes all the
+        mandatory and optional properties/labels inherited from its supertypes.
+
+        @param node_type_name: Name of the Node Type.
+        @:return Dict containing the optional and mandatory labels and properties of the supertypes.
+        """
         node_type = self.node_types[node_type_name]
         supertypes = node_type['supertypes']
         inherited_labels = set(node_type['labels'])
@@ -154,6 +207,14 @@ class SchemaParser:
         }
 
     def _resolve_edge_type(self, edge_type_name):
+        """
+        Recursively resolves the inheritance for an edge type, consolidating properties and labels
+        from its supertypes. The method ensures that the edge type includes all the
+        mandatory and optional properties/labels inherited from its supertypes.
+
+        @param edge_type_name: Name of the Edge Type.
+        @:return Dict containing the optional and mandatory labels and properties of the supertypes.
+        """
         edge_type = self.edge_types[edge_type_name]
         supertypes = edge_type['supertypes']
         inherited_labels = set(edge_type['labels'])

@@ -9,6 +9,11 @@ from fcapy.visualizer import LineVizNx
 
 
 class FCAHelper:
+    """
+    Class to generate concept lattices for nodes and edges based ont the given graph data using the fcapy library.
+    It also saves a visualization of the concept lattices. It also allows querying sub-concepts and super-concepts
+    in these lattices.
+    """
     def __init__(self, config):
         self.config = config
         self.node_context = None
@@ -17,6 +22,11 @@ class FCAHelper:
         self.edge_concept_lattice = None
 
     def generate_node_concept_lattice(self, graph_data):
+        """
+        Generates a concept lattice for nodes of the given graph and saves the visualization output as a PNG.
+
+        :param graph_data: The graph data from which node concept lattices are generated.
+        """
         node_data = self._create_node_dataframe(graph_data)
         self.node_context = FormalContext.from_pandas(node_data)
         self.node_concept_lattice = ConceptLattice.from_context(self.node_context)
@@ -29,6 +39,11 @@ class FCAHelper:
         plt.savefig(self.config.get("out_dir") + "node_concept_lattice.png")
 
     def generate_edge_concept_lattice(self, graph_data):
+        """
+        Generates a concept lattice for edges of the given graph and saves the visualization output as a PNG.
+
+        :param graph_data: The graph data from which edge concept lattices are generated.
+        """
         edge_data = self._create_edge_dataframe(graph_data)
         self.edge_context = FormalContext.from_pandas(edge_data)
         self.edge_concept_lattice = ConceptLattice.from_context(self.edge_context)
@@ -41,6 +56,12 @@ class FCAHelper:
         plt.savefig(self.config.get("out_dir") + "edge_concept_lattice.png")
 
     def _create_node_dataframe(self, graph_data):
+        """
+       Creates a pandas DataFrame from the node data in the graph based on the extraction mode.
+
+       :param graph_data: The graph data containing nodes and their properties.
+       :return: A pandas DataFrame with nodes as rows and labels/properties as columns.
+       """
         nodes = list(graph_data.nodes.values())
 
         all_labels = sorted({label for node in nodes for label in node.labels})
@@ -57,10 +78,10 @@ class FCAHelper:
         else:
             raise ValueError("extraction_mode must be 'label_based', 'property_based', or 'label_property_based'")
 
-        data = {}
+        data = {node.id: {col: False for col in columns} for node in nodes}
 
         for node in nodes:
-            node_data = {}
+            node_data = data[node.id]
 
             if extraction_mode == "label_based" or extraction_mode == "label_property_based":
                 for label in node.labels:
@@ -77,6 +98,12 @@ class FCAHelper:
         return df
 
     def _create_edge_dataframe(self, graph_data):
+        """
+        Creates a pandas DataFrame from the edge data in the graph based on the extraction mode.
+
+        :param graph_data: The graph data containing edges and their properties.
+        :return: A pandas DataFrame with edges as rows and labels/properties as columns.
+        """
         edges = graph_data.edges.values()
 
         all_labels = sorted({label for edge in edges for label in edge.labels})
@@ -92,10 +119,11 @@ class FCAHelper:
             columns = all_labels + all_properties
         else:
             raise ValueError("extraction_mode must be 'label_based', 'property_based', or 'label_property_based'")
-        data = {}
+
+        data = {edge.id: {col: False for col in columns} for edge in edges}
 
         for edge in edges:
-            edge_data = {}
+            edge_data = data[edge.id]
 
             if extraction_mode == "label_based" or extraction_mode == "label_property_based":
                 for label in edge.labels:
@@ -112,7 +140,19 @@ class FCAHelper:
         return df
 
     def get_node_sub_super_concepts(self, concept_id):
+        """
+        Retrieves the sub-concepts and super-concepts of a concept in the concept lattice.
+
+        :param concept_id: The ID of the concept in the node concept lattice.
+        :return: A tuple containing sub-concepts and super-concepts.
+        """
         return self.node_concept_lattice.children_dict[concept_id], self.node_concept_lattice.parents_dict[concept_id]
 
     def get_edge_sub_super_concepts(self, concept_id):
+        """
+        Retrieves the sub-concepts and super-concepts of a concept in the concept lattice.
+
+        :param concept_id: The ID of the concept in the edge concept lattice.
+        :return: A tuple containing sub-concepts and super-concepts.
+        """
         return self.edge_concept_lattice.children_dict[concept_id], self.edge_concept_lattice.parents_dict[concept_id]

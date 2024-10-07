@@ -2,6 +2,7 @@ from .base_extractor import BaseExtractor
 from neo4j import GraphDatabase
 from ..graph_data.graph_data import Node, Edge
 
+# Retrieves nodes, their labels, and their properties from the Neo4j database
 def get_nodes_labels_and_properties(tx):
     query = """
         MATCH (n)
@@ -10,6 +11,7 @@ def get_nodes_labels_and_properties(tx):
     result = tx.run(query)
     return [(record["node_id"], record["labels"], record["props"]) for record in result]
 
+# Retrieves edges, their type, properties, and start/end node IDs from the Neo4j database
 def get_edges_labels_and_properties(tx):
     query = """
             MATCH (start)-[r]->(end)
@@ -21,10 +23,18 @@ def get_edges_labels_and_properties(tx):
 
 
 class Neo4jExtractor(BaseExtractor):
+    """
+    Class for extracting graph data from a Neo4j database.
+    """
     def __init__(self, config):
         super().__init__(config)
 
     def extract_graph_data(self):
+        """
+       Extracts graph data from the Neo4j database.
+       Connects to the database, retrieves nodes, edges and corresponding labels and properties and populates the
+       graph_data attribute.
+       """
         driver = GraphDatabase.driver(self.config.get("neo4j.uri"),
                                       auth=(self.config.get("neo4j.username"), self.config.get("neo4j.password")))
 
