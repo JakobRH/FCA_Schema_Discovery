@@ -254,7 +254,7 @@ class Type:
 
         @param type_dict: A dict of types to look up the type instances.
         """
-        supertypes = self._get_all_supertypes(type_dict)
+        supertypes = self.get_all_supertypes(type_dict)
         for supertype_name in supertypes:
             supertype = type_dict.get(supertype_name)
             self.labels.difference_update(supertype.labels)
@@ -270,7 +270,7 @@ class Type:
                 self.startpoint_types.difference_update(supertype.startpoint_types)
                 self.endpoint_types.difference_update(supertype.endpoint_types)
 
-    def _get_all_supertypes(self, type_dict):
+    def get_all_supertypes(self, type_dict):
         """
         Recursively get all transitive supertypes.
 
@@ -278,5 +278,5 @@ class Type:
         """
         all_supertypes = set(self.supertypes)
         for supertype in self.supertypes:
-            all_supertypes.update(type_dict.get(supertype)._get_all_supertypes(type_dict))
+            all_supertypes.update(type_dict.get(supertype).get_all_supertypes(type_dict))
         return all_supertypes

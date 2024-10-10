@@ -8,13 +8,15 @@ class Config:
     allowing command-line arguments to override specific configuration values.
     """
 
-    def __init__(self, config_path='config\config.json'):
+    def __init__(self, logger, config_path='config\config.json'):
         """
         Initializes the Config class by loading the config from the provided
         JSON file and then overriding specific values with command-line arguments if provided.
 
         :param config_path: The file path to the configuration JSON file.
+        :param logger: Logger.
         """
+        self.logger = logger
         self.config = self._load_config(config_path)
         self._override_with_cli_args()
 
@@ -74,3 +76,69 @@ class Config:
             if value is default:
                 break
         return value
+
+    def validate_config(self):
+        """
+        Validates the configuration by checking for required fields and their types.
+
+        :return: A tuple of (is_valid, error_messages).
+                 is_valid is True if the config is valid, False otherwise.
+                 error_messages is a list of errors found during validation.
+        """
+        errors = []
+
+        required_fields = {
+            "data_source": str,
+            "neo4j.uri": str,
+            "neo4j.username": str,
+            "neo4j.password": str,
+            "graph_generator": bool,
+            "graph_generator_schema_path": str,
+            "node_type_extraction": str,
+            "edge_type_extraction": str,
+            "out_dir": str,
+            "optional_labels": bool,
+            "optional_properties": bool,
+            "label_outlier_threshold": int,
+            "property_outlier_threshold": int,
+            "endpoint_outlier_threshold": int,
+            "merge_threshold": float,
+            "graph_type_name": str,
+            "graph_type_mode": str,
+            "open_labels": bool,
+            "open_properties": bool,
+            "abstract_type_threshold": float,
+            "remove_inherited_features": bool,
+            "abstract_type_lookup": bool,
+            "max_node_types": int,
+            "max_edge_types": int,
+            "max_types": bool,
+            "validate_graph": bool
+        }
+
+        allowed_values = {
+            "data_source": ["neo4j"],
+            "graph_type_mode": ["LOOSE", "STRICT"],
+            "node_type_extraction": ["label_based", "property_based", "label_property_based"],
+            "edge_type_extraction": ["label_based", "property_based", "label_property_based"]
+        }
+
+        for field, expected_type in required_fields.items():
+            value = self.get(field)
+
+            if value is None:
+                errors.append(f"Missing required field: {field}")
+            elif not isinstance(value, expected_type):
+                errors.append(
+                    f"Invalid type for {field}: Expected {expected_type.__name__}, got {type(value).__name__}")
+
+        for field, allowed in allowed_values.items():
+            value = self.get(field)
+            if value not in allowed:
+                errors.append(f"Invalid value for {field}: Expected one of {allowed}, got {value}")
+
+        if errors:
+            self.logger.error(errors)
+            return False
+        else:
+            return True

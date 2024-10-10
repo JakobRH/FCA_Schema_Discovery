@@ -14,11 +14,12 @@ def main():
     parser = argparse.ArgumentParser(description='Schema Extractor Tool')
     parser.add_argument('--config', type=str, help='Path to config file', default='config\config.json')
     args = parser.parse_args()
-
-    config = Config(args.config)
-
     logger = setup_logger('schema_extractor', 'schema_extractor.log')
     logger.info('Start Schmema Discovery.')
+
+    config = Config(logger, args.config)
+    if not config.validate_config():
+        return
 
     # Step 1: Extract data
     if config.get("graph_generator"):
@@ -29,10 +30,12 @@ def main():
         schema_parser.parse_schema()
         graph_generator = GraphGenerator(schema_parser)
         graph_data = graph_generator.generate_graph(10000, 100000)
+        logger.info(f'Graph successfully generated. Graph has {len(graph_data.nodes)} nodes and {len(graph_data.edges)} edges.')
     else:
         extractor = ExtractorFactory.get_extractor(config)
         extractor.extract_graph_data()
         graph_data = extractor.graph_data
+        logger.info('Data successfully extracted.')
 
     graph_data.infer_property_data_types()
 
@@ -40,17 +43,21 @@ def main():
     node_fca_helper = FCAHelper(config)
     graph_type = GraphType(config)
     node_fca_helper.generate_node_concept_lattice(graph_data)
+    logger.info('Node Concept Lattice successfully generated.')
     type_extractor = TypeExtractor(config, node_fca_helper, graph_data, graph_type, "NODE")
     graph_type.node_types = type_extractor.extract_types()
+    logger.info('Node Types successfully extracted.')
     node_fca_helper.generate_edge_concept_lattice(graph_data)
+    logger.info('Edge Concept Lattice successfully generated.')
     type_extractor.extraction_mode = "EDGE"
     graph_type.edge_types = type_extractor.extract_types()
+    logger.info('Edge Types successfully extracted.')
 
     # Step 3: Create schema
     graph_type.create_schema()
 
     if config.get("validate_graph"):
-        validator = Validator(graph_data, graph_type.node_types, graph_type.edge_types, config)
+        validator = Validator(graph_data, graph_type.node_types, graph_type.edge_types, config, logger)
         validator.validate_graph()
 
     logger.info('Schema extraction completed successfully.')

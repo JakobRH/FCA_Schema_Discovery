@@ -86,8 +86,7 @@ class GraphGenerator:
             self.node_type_to_nodes[node_type_name] = []
             for _ in range(num_nodes):
                 node_id = f"node_{len(self.graph_data.nodes) + 1}"
-                labels = node_type_def["labels"]
-
+                labels = node_type_def["labels"].copy()
                 for opt_label in node_type_def.get("optional_labels", []):
                     if random.choice([True, False]):
                         labels.append(opt_label)

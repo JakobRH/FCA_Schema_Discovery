@@ -75,9 +75,8 @@ class FCAHelper:
             columns = all_properties
         elif extraction_mode == "label_property_based":
             columns = all_labels + all_properties
-        else:
-            raise ValueError("extraction_mode must be 'label_based', 'property_based', or 'label_property_based'")
-
+        if not columns:
+            columns = ['']
         data = {node.id: {col: False for col in columns} for node in nodes}
 
         for node in nodes:
@@ -104,12 +103,12 @@ class FCAHelper:
         :param graph_data: The graph data containing edges and their properties.
         :return: A pandas DataFrame with edges as rows and labels/properties as columns.
         """
-        edges = graph_data.edges.values()
+        edges = list(graph_data.edges.values())
 
         all_labels = sorted({label for edge in edges for label in edge.labels})
         all_properties = sorted({key for edge in edges for key in edge.properties.keys()})
+        extraction_mode = self.config.get("edge_type_extraction")
 
-        extraction_mode = self.config.get("node_type_extraction")
         columns = []
         if extraction_mode == "label_based":
             columns = all_labels
@@ -117,12 +116,13 @@ class FCAHelper:
             columns = all_properties
         elif extraction_mode == "label_property_based":
             columns = all_labels + all_properties
-        else:
-            raise ValueError("extraction_mode must be 'label_based', 'property_based', or 'label_property_based'")
+        if not columns:
+            columns = ['']
 
         data = {edge.id: {col: False for col in columns} for edge in edges}
 
         for edge in edges:
+
             edge_data = data[edge.id]
 
             if extraction_mode == "label_based" or extraction_mode == "label_property_based":

@@ -38,6 +38,7 @@ class TypeExtractor:
             approach = self.config.get("edge_type_extraction")
 
         types = self._initialize_types(approach)
+        self._remove_elements_in_subtypes(types)
 
         if approach == "label_based":
             self._compute_properties(types)
@@ -184,6 +185,42 @@ class TypeExtractor:
             properties = self._compute_property_data_types(properties)
         return labels, properties
 
+    def _remove_elements_in_subtypes(self, types):
+        """
+        Removes nodes or edges from a type if they are present in one of its subtypes.
+        Operates recursively based on the type's subtype hierarchy.
+
+        @param types: Types List.
+        @return Updated Types List.
+        """
+        type_dict = {type_obj.name: type_obj for type_obj in types}
+        for type_obj in types:
+            if self.extraction_mode == 'NODE':
+                all_subtypes = self._get_all_subtypes(type_obj, type_dict)
+                for subtype in all_subtypes:
+                    type_obj.nodes.difference_update(type_dict[subtype].nodes)
+
+            elif self == self.extraction_mode == 'EDGE':
+                all_subtypes = self._get_all_subtypes(type_obj, type_dict)
+
+                for subtype in all_subtypes:
+                    type_obj.edges.difference_update(type_dict[subtype].edges)
+
+    def _get_all_subtypes(self, type_obj, type_dict):
+        """
+        Recursively retrieves all transitive subtypes for a given Type instance.
+
+        @param type_obj: The Type instance for which to find subtypes.
+        @param type_dict: A dictionary mapping type names to Type instances.
+        @return: A set of all subtypes.
+        """
+        all_subtypes = set(type_obj.subtypes)
+        for subtype_name in type_obj.subtypes:
+            if subtype_name in type_dict:
+                subtype = type_dict[subtype_name]
+                all_subtypes.update(self._get_all_subtypes(subtype, type_dict))
+        return all_subtypes
+
     def _compute_properties(self, types):
         """
         Computes the properties for each type instance, determining both mandatory and optional properties.
@@ -315,7 +352,7 @@ class TypeExtractor:
                             best_similarity = similarity
                             best_pair = (type_, supertype)
 
-            if best_pair is None or best_similarity < self.config.get("label_based_merge_threshold"):
+            if best_pair is None or best_similarity < self.config.get("merge_threshold"):
                 break
 
             subtype, supertype = best_pair
@@ -373,7 +410,6 @@ class TypeExtractor:
                             best_similarity = similarity
                             type_to_merge = type_
                             best_supertype = supertype
-
                 self._merge_with_supertype(type_to_merge, best_supertype, types)
 
             else:
@@ -409,7 +445,7 @@ class TypeExtractor:
                     similarity = type1.jaccard_similarity(type2)
 
                     if similarity >= self.config.get("abstract_type_threshold"):
-                        abstract_type = self._create_abstract_type(self.config, type1, type2)
+                        abstract_type = self._create_abstract_type(type1, type2)
                         created_abstract_types.append(abstract_type)
 
         types.extend(created_abstract_types)
@@ -503,7 +539,6 @@ class TypeExtractor:
             edge_type.endpoint_types = set(
                 [node_type for node_type, count in endpoint_candidates.items() if count >= threshold]
             )
-
             self._filter_subtypes(edge_type.startpoint_types, self.graph_type.node_types)
             self._filter_subtypes(edge_type.endpoint_types, self.graph_type.node_types)
 
@@ -516,28 +551,10 @@ class TypeExtractor:
         @return: None
         """
         to_remove = set()
-
+        type_dict = {type_.name: type_ for type_ in node_types}
         for node_type in point_types:
-            # Check if any ancestor of the current node_type exists in point_types
-            ancestors = self._get_all_ancestors(node_type, node_types)
-            if any(ancestor in point_types for ancestor in ancestors):
+            supertypes = type_dict.get(node_type).get_all_supertypes(type_dict)
+            if any(supertype in point_types for supertype in supertypes):
                 to_remove.add(node_type)
 
         point_types.difference_update(to_remove)
-
-    def _get_all_ancestors(self, node_type, node_types):
-        """
-        Recursively finds all ancestor types of a given node type from the node types list.
-
-        @param node_type: The node type whose ancestors are being searched.
-        @param node_types: A list of all available node types to search for ancestors.
-        @return: A set containing all ancestor types of the provided node type.
-        """
-        ancestors = set()
-        direct_supertypes = {nt.name for nt in node_types if node_type in nt.subtypes}
-
-        for supertype in direct_supertypes:
-            ancestors.add(supertype)
-            ancestors.update(self._get_all_ancestors(supertype, node_types))
-
-        return ancestors

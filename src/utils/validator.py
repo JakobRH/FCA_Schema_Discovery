@@ -1,17 +1,21 @@
+import json
+
+
 class Validator:
     """
     Validates a graphs nodes and edges against defined node and edge types from a schema.
     Handles both mandatory and optional labels/properties, and supports open/closed label and property validation.
     """
-    def __init__(self, graph_data, node_types, edge_types, config):
+    def __init__(self, graph_data, node_types, edge_types, config, logger):
         self.graph_data = graph_data
         self.node_types = node_types
         self.edge_types = edge_types
         self.config = config
         self.open_labels = config.get("open_labels")
         self.open_properties = config.get("open_properties")
+        self.logger = logger
 
-    def gather_labels_and_properties(self, type_, types):
+    def _gather_labels_and_properties(self, type_, types):
         """
         Gathers all mandatory and optional labels and properties from a given node or edge type,
         including all inherited ones from its supertypes.
@@ -40,7 +44,7 @@ class Validator:
         gather_type_info(type_, types)
         return mandatory_labels, optional_labels, mandatory_properties, optional_properties
 
-    def validate_node_against_type(self, node, node_type):
+    def _validate_node_against_type(self, node, node_type):
         """
         Validates whether a node conforms to a given node type and its supertypes.
 
@@ -48,7 +52,7 @@ class Validator:
         :param node_type: The node type against which validation is performed.
         :return: True if the node conforms to the type, False otherwise.
         """
-        mandatory_labels, optional_labels, mandatory_properties, optional_properties = self.gather_labels_and_properties(node_type, self.node_types)
+        mandatory_labels, optional_labels, mandatory_properties, optional_properties = self._gather_labels_and_properties(node_type, self.node_types)
 
         node_labels = set(node.labels)
         missing_labels = mandatory_labels - node_labels
@@ -72,7 +76,7 @@ class Validator:
 
         return True
 
-    def validate_edge_against_type(self, edge, edge_type, valid_nodes):
+    def _validate_edge_against_type(self, edge, edge_type, valid_nodes):
         """
         Validates whether an edge conforms to a given edge type, including its labels, properties,
         and the conformity of its start and end nodes.
@@ -82,7 +86,7 @@ class Validator:
         :param valid_nodes: Dictionary of validated nodes to check start and end nodes.
         :return: True if the edge conforms to the type, False otherwise.
         """
-        mandatory_labels, optional_labels, mandatory_properties, optional_properties = self.gather_labels_and_properties(edge_type, self.edge_types)
+        mandatory_labels, optional_labels, mandatory_properties, optional_properties = self._gather_labels_and_properties(edge_type, self.edge_types)
 
         edge_labels = set(edge.labels)
         missing_labels = mandatory_labels - edge_labels
@@ -107,15 +111,15 @@ class Validator:
         start_node = valid_nodes.get(edge.start_node_id)
         end_node = valid_nodes.get(edge.end_node_id)
 
-        if not self.node_conforms_to_any_type(start_node, edge_type.startpoint_types):
+        if not self._node_conforms_to_any_type(start_node, edge_type.startpoint_types):
             return False
 
-        if not self.node_conforms_to_any_type(end_node, edge_type.endpoint_types):
+        if not self._node_conforms_to_any_type(end_node, edge_type.endpoint_types):
             return False
 
         return True
 
-    def node_conforms_to_any_type(self, node, valid_type_names):
+    def _node_conforms_to_any_type(self, node, valid_type_names):
         """
         Checks whether a node conforms to any of the provided valid type names, considering supertypes.
 
@@ -145,22 +149,31 @@ class Validator:
         :return: True if the entire graph conforms to the schema, False otherwise.
         """
         valid_nodes = {}
-        is_valid = True
+        invalid_nodes = []
+        invalid_edges = []
 
         for node_id, node in self.graph_data.nodes.items():
-            node_conforms = any(self.validate_node_against_type(node, node_type)
+            node_conforms = any(self._validate_node_against_type(node, node_type)
                                 for node_type in self.node_types)
             if not node_conforms:
-                print(f"Node {node_id} does not conform to any node type.")
-                is_valid = False
+                invalid_nodes.append({"node_id": node_id, "node_labels": node.labels, "node_properties": list(node.properties.keys())})
             valid_nodes[node_id] = node
 
         for edge_id, edge in self.graph_data.edges.items():
-            edge_conforms = any(self.validate_edge_against_type(edge, edge_type, valid_nodes)
+            edge_conforms = any(self._validate_edge_against_type(edge, edge_type, valid_nodes)
                                 for edge_type in self.edge_types)
             if not edge_conforms:
-                print(f"Edge {edge_id} does not conform to any edge type.")
-                is_valid = False
+                invalid_edges.append({"edge_id": edge_id, "edge_labels": edge.labels, "edge_properties": list(edge.properties.keys()), "edge_start_node": edge.start_node_id, "edge_end_node": edge.end_node_id})
 
-        print("Graph is valid under the schema.")
-        return is_valid
+
+        if invalid_nodes or invalid_edges:
+            invalid_elements = {
+                "invalid_nodes": invalid_nodes,
+                "invalid_edges": invalid_edges
+            }
+
+            with open(self.config.get("out_dir") + 'invalid_elements.json', 'w') as file:
+                json.dump(invalid_elements, file, indent=4)
+            self.logger.error("Graph is not valid under the schema.\nInvalid nodes and edges saved to 'invalid_elements.json'.")
+        else:
+            self.logger.info("Graph is valid under the schema.")

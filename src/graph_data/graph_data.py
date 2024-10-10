@@ -2,7 +2,7 @@ from collections import defaultdict, Counter
 
 from neo4j._spatial import Point
 from neo4j.time import Date, Time, DateTime, Duration
-
+from datetime import date, timedelta, time, datetime
 
 class GraphElement:
     """
@@ -185,9 +185,15 @@ class GraphData:
             return "MAP"
         elif isinstance(value, Date):
             return "DATE"
+        elif isinstance(value, date):
+            return "DATE"
         elif isinstance(value, Time):
             return "TIME"
+        elif isinstance(value, time):
+            return "TIME"
         elif isinstance(value, DateTime):
+            return "DATETIME"
+        elif isinstance(value, datetime):
             return "DATETIME"
         elif isinstance(value, Duration):
             return "DURATION"
