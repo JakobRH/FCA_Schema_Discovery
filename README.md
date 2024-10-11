@@ -57,8 +57,10 @@ One level inheritane with optional properties and labels.  Graphtype attributes 
 (NodeType2: NodeType1 & Customer & Gender? OPEN {c_id INTEGER, OPEN}),    
 (NodeType3: Account OPEN {acct_id INTEGER, OPEN}),    
 (:NodeType1) - [EdgeType0 : owns & posses {since DATE, OPTIONAL amount FLOAT, OPEN}] -> (:NodeType3)    
-}** 
+}**  
+
  This result was achieved with label-based approach. Result is the same as original Schema.  
+ 
 **CREATE GRAPH TYPE GraphTypeExample LOOSE {    
 (NodeType1: Person OPEN {name STRING, OPTIONAL birthday DATE, OPEN}),    
 (NodeType3: Account OPEN {acct_id INTEGER, OPEN}),    
