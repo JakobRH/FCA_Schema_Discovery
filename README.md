@@ -42,7 +42,9 @@ The configuration file allows you to control how schemas are extracted. Below is
 
 ## Schema Examples  
 A collection of schema examples used for evaluating. For each example the best approach and result is listed.  
+
 ### schema1.pgs  
+
 One level inheritane with optional properties and labels.  Graphtype attributes like "LOOSE"/"STRICT" or "OPEN"/"CLOSED" are default values of the config and not based on the graph the schema is extracted from.
     
 **CREATE GRAPH TYPE ExampleGraphType {    
@@ -51,7 +53,9 @@ One level inheritane with optional properties and labels.  Graphtype attributes 
   (AccountType: Account {acct_id INTEGER}),    
   (:PersonType|CustomerType)-[OwnsAccountType: owns & posses {since DATE, OPTIONAL amount FLOAT}]->(:AccountType)    
 }**  
+
 #### Result Schema  
+
 **CREATE GRAPH TYPE GraphTypeExampleType LOOSE {    
 (NodeType1: Person OPEN {name STRING, OPTIONAL birthday DATE, OPEN}),    
 (NodeType2: NodeType1 & Customer & Gender? OPEN {c_id INTEGER, OPEN}),    
@@ -66,24 +70,34 @@ One level inheritane with optional properties and labels.  Graphtype attributes 
 (NodeType3: Account OPEN {acct_id INTEGER, OPEN}),    
 (NodeType6: Customer & Person & Gender? OPEN {c_id INTEGER, name STRING, OPTIONAL birthday DATE, OPEN}),    
 (:NodeType1|NodeType6) - [EdgeType0 : owns & posses {since DATE, OPTIONAL amount FLOAT, OPEN}] -> (:NodeType3)    
-}** This result was achieved with label-property-based approach with max_type for nodes 3. Here the types one its own  are correctly identified but the inheritance relation is lost because of the merging process.  
+}** 
+
+This result was achieved with label-property-based approach with max_type for nodes 3. Here the types one its own  are correctly identified but the inheritance relation is lost because of the merging process.
+
 ### schema2.pgs  
+
 A Basic Schema to check if basic requirements can be met.  
+
 **CREATE GRAPH TYPE BasicGraphType {    
   (PersonType: Person {name STRING, age INTEGER}),    
   (CustomerType: Item {p_id INTEGER, price FLOAT}),    
   (:PersonType)-[Buys: purchases {quantity INTEGER}]->(:ProductType)    
 }**  
+
 #### Result Schema  
+
 **CREATE GRAPH TYPE GraphTypeExample LOOSE {    
 (NodeType1: Item OPEN {p_id INTEGER, price FLOAT, OPEN}),    
 (NodeType2: Person OPEN {name STRING, age INTEGER, OPEN}),    
 (:NodeType2) - [EdgeType0 : purchases {quantity INTEGER, OPEN}] -> (:NodeType1)    
 }** 
+
 The label-based approach extracts the schema exactly the same.  
   
 ### schema3.pgs  
+
 A graph with multiple inheritance over two levels with optional labels.    
+
 **CREATE GRAPH TYPE InheritanceGraphType {    
   (PersonType: Person {name STRING, age INTEGER}),    
   (WorkerType: Worker {craft STRING}),    
@@ -92,7 +106,9 @@ A graph with multiple inheritance over two levels with optional labels.
   (ManagerType: EmployeeType {manager_level STRING}),    
   (:EmployeeType)-[Manages: supervises]->(:ManagerType)    
 }**
+
  #### Result Schema  
+ 
  **CREATE GRAPH TYPE GraphTypeExample LOOSE {    
 (NodeType1: Person OPEN {age INTEGER, name STRING, OPEN}),    
 (NodeType2: Worker OPEN {craft STRING, OPEN}),    
@@ -101,7 +117,9 @@ A graph with multiple inheritance over two levels with optional labels.
 (NodeType6: NodeType5 & Customer OPEN),    
 (:NodeType3) - [EdgeType0 : supervises ] -> (:NodeType3)    
 }**
+
 This result was achieved by the label-property-based approach with max types 5 for nodes and 1 for edges. In general the structure of the original schema was extracted but the Usertype was split up into to types, which can be resolved by setting the max types of nodes to 4. But the Managertype is not recognized on its own but merged into the Employeetype (manager_level STRING becomes an optinal property for Emplyeetype). If max type for nodes is set to 4 the result looks as follows:
+
 **CREATE GRAPH TYPE GraphTypeExample LOOSE {    
 (NodeType1: Person OPEN {age INTEGER, name STRING, OPEN}),   
 (NodeType2: Worker OPEN {craft STRING, OPEN}),   
@@ -109,7 +127,9 @@ This result was achieved by the label-property-based approach with max types 5 f
 (NodeType5: NodeType1 & Customer? OPEN {username STRING, OPEN}),   
 (:NodeType3) - [EdgeType0 : supervises ] -> (:NodeType3)   
 }**
+
 ### schema4.pgs
+
 Schema with more complex relationship and node type are defined by properties and not labels.
 
 **CREATE GRAPH TYPE ComplexRelationshipGraphType {  
@@ -120,7 +140,9 @@ Schema with more complex relationship and node type are defined by properties an
   (:CustomerType)-[PlacesOrderType: places]->(:OrderType),  
   (:OrderType)-[ContainsProductType: contains]->(:ProductType)  
 }**
+
 #### Result Schema
+
 **CREATE GRAPH TYPE GraphTypeExample LOOSE {   
 (NodeType1:  OPEN {category STRING, p_id INTEGER, OPEN}),   
 (NodeType2:  OPEN {name STRING, OPEN}),   
@@ -129,17 +151,23 @@ Schema with more complex relationship and node type are defined by properties an
 (:NodeType3) - [EdgeType1 : contains ] -> (:NodeType1),   
 (:NodeType4) - [EdgeType2 : places ] -> (:NodeType3)   
 }**
+
 The extraction with property-based approach for nodes and label-based approach for edges, creates the schema exactly like the original.
 
 ### schema5.pgs
+
 Cyclic Relationship schema. The result was exactly the same.
+
 **CREATE GRAPH TYPE CyclicGraphType {  
   (UserType: Person {username STRING}),   
   (:UserType)-[Follows: follows]->(:UserType),   
   (:UserType)-[Blocks: blocks]->(:UserType)   
 }**
+
 ### schema6.pgs
+
 Disconnected Graph, to see if the structure without inheritance can also be extracted correctly. The result was exactly the same.
+
 **CREATE GRAPH TYPE DisconnectedGraphType {  
   (UserType: User {username STRING}),  
   (PostType: Post {content STRING}),  
@@ -148,8 +176,11 @@ Disconnected Graph, to see if the structure without inheritance can also be extr
   (CountryType: Country {name STRING}),  
   (:CityType)-[LocatedInType: located_in]->(:CountryType)  
 }**
+
 ### schema7.pgs
+
 A quite simple but big graph to check if the number of types in the schema matter.
+
 **CREATE GRAPH TYPE BigUniversityGraphType {  
   (PersonType: Person {name STRING, birthdate DATE}),  
   (StudentType: PersonType & Student {student_id INTEGER}),  
@@ -168,7 +199,9 @@ A quite simple but big graph to check if the number of types in the schema matte
   (:ProfessorType)-[MemberOfType: member_of {since DATE}]->(:ClubType),  
   (:StaffType)-[WorksAtType: works_at]->(:DepartmentType)  
 }**
+
 #### Result Schema
+
 **CREATE GRAPH TYPE GraphTypeExample LOOSE {   
 (NodeType1: Person OPEN {name STRING, birthdate DATE, OPEN}),  
 (NodeType2: NodeType1 & Professor OPEN {professor_id INTEGER, department STRING, OPEN}),  
@@ -186,19 +219,25 @@ A quite simple but big graph to check if the number of types in the schema matte
 (:NodeType3) - [EdgeType6 : manages {since DATE, OPEN}] -> (:NodeType8),  
 (:NodeType7) - [EdgeType7 : collaborates_with {project_name STRING, OPEN}] -> (:NodeType7)  
 }**
+
 The result achieved with label-based approach is exactly the same.
 
 ### schema8.pgs
+
 A schema that shows the potential to introduce an abstract type. Both node type definitions share properties, that could be gathered into an abstract type.
+
 **CREATE GRAPH TYPE AbstractTypeGraphType {   
   (StudentType: Student {student_id INTEGER, major STRING, name STRING, birthdate DATE, email STRING, phone_number STRING}),   
   (ProfessorType: Professor {professor_id INTEGER, department STRING, name STRING, birthdate DATE, email STRING, phone_number STRING})   
 }**
+
 #### Result Schema
+
 **CREATE GRAPH TYPE GraphTypeExample LOOSE {    
 (NodeType1: AbstractNodeTypeNodeType2+NodeType1 & Professor OPEN {professor_id INTEGER,  department STRING, OPEN}),   
 (NodeType2: AbstractNodeTypeNodeType2+NodeType1 & Student OPEN {student_id INTEGER, major STRING, OPEN}),   
 ABSTRACT (AbstractNodeTypeNodeType2+NodeType1 OPEN {name STRING, birthdate DATE, email STRING, phone_number STRING, OPEN})  
 }**
+
 The extraction process recognizes the similarities and gathers them together into an abstract type.
 
