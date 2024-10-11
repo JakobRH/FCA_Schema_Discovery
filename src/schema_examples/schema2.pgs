@@ -1,5 +1,0 @@
-CREATE GRAPH TYPE BasicGraph {
-  (PersonType: Person {name STRING, age INTEGER}),
-  (ProductType: Item {p_id INTEGER, price FLOAT}),
-  (:PersonType)-[Buys: purchases {quantity INTEGER}]->(:ProductType)
-}

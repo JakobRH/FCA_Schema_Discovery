@@ -1,0 +1,5 @@
+CREATE GRAPH TYPE GraphTypeExample LOOSE { 
+(NodeType1: AbstractNodeTypeNodeType2+NodeType1 & Professor OPEN {professor_id INTEGER, department STRING, OPEN}),
+(NodeType2: AbstractNodeTypeNodeType2+NodeType1 & Student OPEN {student_id INTEGER, major STRING, OPEN}),
+ABSTRACT (AbstractNodeTypeNodeType2+NodeType1 OPEN {name STRING, birthdate DATE, email STRING, phone_number STRING, OPEN})
+}

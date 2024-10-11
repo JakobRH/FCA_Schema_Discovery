@@ -432,7 +432,7 @@ class TypeExtractor:
         supertypes_map = defaultdict(set)
         type_dict = {type_.name: type_ for type_ in types}
         for type_ in types:
-            supertypes_map[type_] = type_._get_all_supertypes(type_dict)
+            supertypes_map[type_] = type_.get_all_supertypes(type_dict)
 
         for i in range(len(types)):
             for j in range(i + 1, len(types)):

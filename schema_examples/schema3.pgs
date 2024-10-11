@@ -1,0 +1,8 @@
+CREATE GRAPH TYPE InheritanceGraphType {
+  (PersonType: Person {name STRING, age INTEGER}),
+  (WorkerType: Worker {craft STRING}),
+  (UserType: PersonType & Customer? {username STRING}),
+  (EmployeeType: PersonType & WorkerType {employee_id INTEGER, salary FLOAT}),
+  (ManagerType: EmployeeType {manager_level STRING}),
+  (:EmployeeType)-[Manages: supervises]->(:ManagerType)
+}

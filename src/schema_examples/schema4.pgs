@@ -1,8 +1,0 @@
-CREATE GRAPH TYPE ComplexRelationshipGraph {
-  (PersonType: {name STRING}),
-  (CustomerType: PersonType {customer_id INTEGER}),
-  (ProductType: {p_id INTEGER, category STRING}),
-  (OrderType: {order_id INTEGER, date DATE}),
-  (:CustomerType)-[PlacesOrderType: places]->(:OrderType),
-  (:OrderType)-[ContainsProductType: contains]->(:ProductType)
-}

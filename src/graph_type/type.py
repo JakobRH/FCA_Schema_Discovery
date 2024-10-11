@@ -183,30 +183,40 @@ class Type:
        @return: A float representing the average Jaccard similarity over labels, optional labels, properties, and optional properties.
        """
         similarities = []
+        total_elements = 0
 
-        label_intersection = len(self.labels & other.labels)
-        label_union = len(self.labels | other.labels)
-        label_similarity = label_intersection / label_union if label_union != 0 else 0
-        similarities.append(label_similarity)
+        label_count = len(self.labels | other.labels)
+        if label_count > 0:
+            label_intersection = len(self.labels & other.labels)
+            label_similarity = label_intersection / label_count
+            similarities.append(label_similarity * label_count)
+            total_elements += label_count
 
-        if self.optional_labels or other.optional_labels:
+        optional_label_count = len(self.optional_labels | other.optional_labels)
+        if optional_label_count > 0:
             optional_label_intersection = len(self.optional_labels & other.optional_labels)
-            optional_label_union = len(self.optional_labels | other.optional_labels)
-            optional_label_similarity = optional_label_intersection / optional_label_union if optional_label_union != 0 else 0
-            similarities.append(optional_label_similarity)
+            optional_label_similarity = optional_label_intersection / optional_label_count
+            similarities.append(optional_label_similarity * optional_label_count)
+            total_elements += optional_label_count
 
-        property_intersection = len(self.properties.keys() & other.properties.keys())
-        property_union = len(self.properties.keys() | other.properties.keys())
-        property_similarity = property_intersection / property_union if property_union != 0 else 0
-        similarities.append(property_similarity)
+        property_count = len(self.properties.keys() | other.properties.keys())
+        if property_count > 0:
+            property_intersection = len(self.properties.keys() & other.properties.keys())
+            property_similarity = property_intersection / property_count
+            similarities.append(property_similarity * property_count)
+            total_elements += property_count
 
-        if self.optional_properties or other.optional_properties:
+        optional_property_count = len(self.optional_properties.keys() | other.optional_properties.keys())
+        if optional_property_count > 0:
             optional_property_intersection = len(self.optional_properties.keys() & other.optional_properties.keys())
-            optional_property_union = len(self.optional_properties.keys() | other.optional_properties.keys())
-            optional_property_similarity = optional_property_intersection / optional_property_union if optional_property_union != 0 else 0
-            similarities.append(optional_property_similarity)
+            optional_property_similarity = optional_property_intersection / optional_property_count
+            similarities.append(optional_property_similarity * optional_property_count)
+            total_elements += optional_property_count
 
-        return sum(similarities) / len(similarities)
+        if total_elements == 0:
+            return 0
+
+        return sum(similarities) / total_elements
 
     def merge_into_other_type(self, other_type):
         """

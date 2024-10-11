@@ -1,0 +1,4 @@
+CREATE GRAPH TYPE AbstractTypeGraphType {
+  (StudentType: Student {student_id INTEGER, major STRING, name STRING, birthdate DATE, email STRING, phone_number STRING}),
+  (ProfessorType: Professor {professor_id INTEGER, department STRING, name STRING, birthdate DATE, email STRING, phone_number STRING})
+}

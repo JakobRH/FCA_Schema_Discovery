@@ -1,8 +1,0 @@
-CREATE GRAPH TYPE DisconnectedGraph {
-  (UserType: User {username STRING}),
-  (PostType: Post {content STRING}),
-  (:UserType)-[LikesType: likes]->(:PostType),
-  (CityType: City {name STRING, population INTEGER}),
-  (CountryType: Country {name STRING}),
-  (:CityType)-[LocatedInType: located_in]->(:CountryType)
-}
