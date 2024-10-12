@@ -56,7 +56,7 @@ One level inheritane with optional properties and labels.  Graphtype attributes 
 
 #### Result Schema  
 
-**CREATE GRAPH TYPE GraphTypeExampleType LOOSE {    
+**CREATE GRAPH TYPE GraphTypeExample LOOSE {    
 (NodeType1: Person OPEN {name STRING, OPTIONAL birthday DATE, OPEN}),    
 (NodeType2: NodeType1 & Customer & Gender? OPEN {c_id INTEGER, OPEN}),    
 (NodeType3: Account OPEN {acct_id INTEGER, OPEN}),    
