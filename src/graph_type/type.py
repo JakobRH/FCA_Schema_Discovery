@@ -89,7 +89,7 @@ class Type:
         labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
         properties_spec = f" {self._format_properties()}" if self.properties or self.optional_properties else ""
         abstract = "ABSTRACT " if self.is_abstract else ""
-        open_labels = " OPEN" if self.config.get("optional_labels") else ""
+        open_labels = " OPEN" if self.config.get("open_labels") else ""
         return f"{abstract}({self.name}{labels_spec}{open_labels}{properties_spec})"
 
     def _to_edge_schema(self):
@@ -101,7 +101,8 @@ class Type:
         """
         labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
         properties_spec = f"{self._format_properties()}" if self.properties or self.optional_properties else ""
-        middle_type = f"[{self.name} {labels_spec} {properties_spec}]"
+        open_labels = " OPEN" if self.config.get("open_labels") else ""
+        middle_type = f"[{self.name} {labels_spec}{open_labels} {properties_spec}]"
         start_type = f"({self._format_endpoints(self.startpoint_types)})"
         end_type = f"({self._format_endpoints(self.endpoint_types)})"
         abstract = "ABSTRACT " if self.is_abstract else ""
@@ -133,7 +134,7 @@ class Type:
         for key, value in self.optional_properties.items():
             properties.append(f"OPTIONAL {key} {value}")
 
-        include_open = self.config.get("optional_properties")
+        include_open = self.config.get("open_properties")
         properties_str = ", ".join(properties)
 
         if properties_str or include_open:

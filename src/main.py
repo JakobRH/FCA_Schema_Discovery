@@ -1,7 +1,7 @@
 from src.graph_extraction.extractor_factory import ExtractorFactory
 import argparse
 from config.config import Config
-from src.graph_generator.SchemaParser import SchemaParser
+from src.graph_generator.schema_parser import SchemaParser
 from src.graph_generator.graph_generator import GraphGenerator
 from src.graph_type.graph_type import GraphType
 from src.schema_inference.type_extractor import TypeExtractor

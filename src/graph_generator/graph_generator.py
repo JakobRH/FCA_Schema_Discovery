@@ -82,6 +82,8 @@ class GraphGenerator:
         @:return: A graph data instance based on the specified schema.
         """
         for node_type_name, node_type_def in self.schema.node_types.items():
+            if node_type_def["abstract"]:
+                continue
             num_nodes = random.randint(min_number_of_elements, max_number_of_elements)
             self.node_type_to_nodes[node_type_name] = []
             for _ in range(num_nodes):
@@ -105,6 +107,8 @@ class GraphGenerator:
                 self.node_type_to_nodes[node_type_name].append(node_id)
 
         for edge_type_name, edge_type_def in self.schema.edge_types.items():
+            if edge_type_def["abstract"]:
+                continue
             num_edges = random.randint(min_number_of_elements, max_number_of_elements)
 
             for _ in range(num_edges):

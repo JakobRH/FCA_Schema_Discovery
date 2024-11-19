@@ -6,7 +6,7 @@
         "password": "password"
     },
     "graph_generator": true,
-    "graph_generator_schema_path": "..\\schema_examples/schema1.pgs",
+    "graph_generator_schema_path": "..\\schema_examples/schema4fun.pgs",
     "node_type_extraction": "label_based",
     "edge_type_extraction":"label_based",
     "out_dir": "..\\results\\",
@@ -22,7 +22,7 @@
     "open_properties": true,
     "abstract_type_threshold": 0.4,
     "remove_inherited_features": true,
-    "abstract_type_lookup": false,
+    "abstract_type_lookup": true,
     "max_node_types": 5,
     "max_edge_types": 1,
     "max_types": true,
