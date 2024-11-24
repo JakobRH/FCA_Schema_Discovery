@@ -29,8 +29,8 @@ class Type:
         self.subtypes = set(subtypes)
         self.is_abstract = is_abstract
         self.entity = entity
-        self.startpoint_types = set()
-        self.endpoint_types = set()
+        self.start_node_types = set()
+        self.end_node_types = set()
         self.name = self._generate_name()
 
     def add_node(self, node):
@@ -103,8 +103,8 @@ class Type:
         properties_spec = f"{self._format_properties()}" if self.properties or self.optional_properties else ""
         open_labels = " OPEN" if self.config.get("open_labels") else ""
         middle_type = f"[{self.name} {labels_spec}{open_labels} {properties_spec}]"
-        start_type = f"({self._format_endpoints(self.startpoint_types)})"
-        end_type = f"({self._format_endpoints(self.endpoint_types)})"
+        start_type = f"({self._format_endpoints(self.start_node_types)})"
+        end_type = f"({self._format_endpoints(self.end_node_types)})"
         abstract = "ABSTRACT " if self.is_abstract else ""
         return f"{abstract}{start_type} - {middle_type} -> {end_type}"
 
@@ -252,8 +252,8 @@ class Type:
         other_type.edges.update(self.edges)
 
         if self.entity == "EDGE":
-            other_type.startpoint_types.update(self.startpoint_types)
-            other_type.endpoint_types.update(self.endpoint_types)
+            other_type.start_node_types.update(self.start_node_types)
+            other_type.end_node_types.update(self.end_node_types)
 
         other_type.subtypes.update(self.subtypes)
 
@@ -278,8 +278,8 @@ class Type:
                 if key in supertype.optional_properties:
                     del self.optional_properties[key]
             if self.entity == "EDGE":
-                self.startpoint_types.difference_update(supertype.startpoint_types)
-                self.endpoint_types.difference_update(supertype.endpoint_types)
+                self.start_node_types.difference_update(supertype.start_node_types)
+                self.end_node_types.difference_update(supertype.end_node_types)
 
     def get_all_supertypes(self, type_dict):
         """
@@ -291,3 +291,14 @@ class Type:
         for supertype in self.supertypes:
             all_supertypes.update(type_dict.get(supertype).get_all_supertypes(type_dict))
         return all_supertypes
+
+    def get_all_subtypes(self, type_dict):
+        """
+        Recursively get all transitive subtypes.
+
+        @param type_dict: A dict of types to look up the type instances.
+        """
+        all_subtypes = set(self.subtypes)
+        for subtype in self.subtypes:
+            all_subtypes.update(type_dict.get(subtype).get_all_subtypes(type_dict))
+        return all_subtypes

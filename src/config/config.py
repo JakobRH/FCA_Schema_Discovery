@@ -104,7 +104,6 @@ class Config:
             "endpoint_outlier_threshold": int,
             "merge_threshold": float,
             "graph_type_name": str,
-            "graph_type_mode": str,
             "open_labels": bool,
             "open_properties": bool,
             "abstract_type_threshold": float,
@@ -113,12 +112,14 @@ class Config:
             "max_node_types": int,
             "max_edge_types": int,
             "max_types": bool,
-            "validate_graph": bool
+            "validate_graph": bool,
+            "merge_schema": bool,
+            "schema_to_merge_path": str,
+            "schema_merge_threshold": float
         }
 
         allowed_values = {
             "data_source": ["neo4j"],
-            "graph_type_mode": ["LOOSE", "STRICT"],
             "node_type_extraction": ["label_based", "property_based", "label_property_based"],
             "edge_type_extraction": ["label_based", "property_based", "label_property_based"]
         }

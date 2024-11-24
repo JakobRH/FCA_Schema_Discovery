@@ -532,29 +532,10 @@ class TypeExtractor:
             startpoint_candidates = edge_type_to_startpoint_types[edge_type.name]
             endpoint_candidates = edge_type_to_endpoint_types[edge_type.name]
 
-            edge_type.startpoint_types = set(
+            edge_type.start_node_types = set(
                 [node_type for node_type, count in startpoint_candidates.items() if count >= threshold]
             )
 
-            edge_type.endpoint_types = set(
+            edge_type.end_node_types = set(
                 [node_type for node_type, count in endpoint_candidates.items() if count >= threshold]
             )
-            self._filter_subtypes(edge_type.startpoint_types, self.graph_type.node_types)
-            self._filter_subtypes(edge_type.endpoint_types, self.graph_type.node_types)
-
-    def _filter_subtypes(self, point_types, node_types):
-        """
-        Filters out subtypes from a set of point types, ensuring only the most specific types remain.
-
-        @param point_types: A set of point types to be filtered.
-        @param node_types: A list of all node types used to find subtypes.
-        @return: None
-        """
-        to_remove = set()
-        type_dict = {type_.name: type_ for type_ in node_types}
-        for node_type in point_types:
-            supertypes = type_dict.get(node_type).get_all_supertypes(type_dict)
-            if any(supertype in point_types for supertype in supertypes):
-                to_remove.add(node_type)
-
-        point_types.difference_update(to_remove)

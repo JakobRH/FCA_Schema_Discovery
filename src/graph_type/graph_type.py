@@ -12,14 +12,14 @@ class GraphType:
         self.node_types = []
         self.edge_types = []
 
-    def create_schema(self):
+    def create_schema(self, name="schema.pgs", nodes_and_edges=True):
         """
         Creates the graph schema, including both node types and edge types.
         The schema is written to a text file, and the nodes and edges are saved as a JSON file.
 
         :return: The generated schema as a string.
         """
-        schema = "CREATE GRAPH TYPE " + self.config.get("graph_type_name") + " " + self.config.get("graph_type_mode") + " { \n"
+        schema = "CREATE GRAPH TYPE " + self.config.get("graph_type_name") + " STRICT { \n"
 
         for i, node_type in enumerate(self.node_types):
             schema += node_type.to_schema()
@@ -37,29 +37,30 @@ class GraphType:
                 schema += "\n"
         schema = schema + "}"
 
-        schema_out_file = self.config.get("out_dir") + "schema.txt"
+        schema_out_file = self.config.get("out_dir") + name
         with open(schema_out_file, 'w') as file:
             file.write(schema)
 
-        nodes_and_edges = {
-            "node_types": [],
-            "edge_types": []
-        }
+        if nodes_and_edges:
+            nodes_and_edges = {
+                "node_types": [],
+                "edge_types": []
+            }
 
-        for node_type in self.node_types:
-            nodes_and_edges["node_types"].append({
-                "name": node_type.name,
-                "nodes": [str(node) for node in node_type.nodes]
-            })
+            for node_type in self.node_types:
+                nodes_and_edges["node_types"].append({
+                    "name": node_type.name,
+                    "nodes": [str(node) for node in node_type.nodes]
+                })
 
-        for edge_type in self.edge_types:
-            nodes_and_edges["edge_types"].append({
-                "name": edge_type.name,
-                "edges": [str(edge) for edge in edge_type.edges]
-            })
+            for edge_type in self.edge_types:
+                nodes_and_edges["edge_types"].append({
+                    "name": edge_type.name,
+                    "edges": [str(edge) for edge in edge_type.edges]
+                })
 
-        nodes_edges_file = self.config.get("out_dir") + "nodes_and_edges.json"
+            nodes_edges_file = self.config.get("out_dir") + "nodes_and_edges.json"
 
-        with open(nodes_edges_file, 'w') as file:
-            json.dump(nodes_and_edges, file, indent=4)
+            with open(nodes_edges_file, 'w') as file:
+                json.dump(nodes_and_edges, file, indent=4)
         return schema

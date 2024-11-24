@@ -5,6 +5,7 @@ from src.graph_generator.schema_parser import SchemaParser
 from src.graph_generator.graph_generator import GraphGenerator
 from src.graph_type.graph_type import GraphType
 from src.schema_inference.type_extractor import TypeExtractor
+from src.schema_merger.schema_merger import SchemaMerger
 from src.utils.validator import Validator
 from utils.logger import setup_logger
 from fca.fca_helper import FCAHelper
@@ -26,7 +27,7 @@ def main():
         schema_file_path = config.get("graph_generator_schema_path")
         with open(schema_file_path, 'r') as file:
             schema_content = file.read()
-        schema_parser = SchemaParser(schema_content)
+        schema_parser = SchemaParser(config, schema_content)
         schema_parser.parse_schema()
         graph_generator = GraphGenerator(schema_parser)
         graph_data = graph_generator.generate_graph(10000, 100000)
@@ -61,6 +62,22 @@ def main():
         validator.validate_graph()
 
     logger.info('Schema extraction completed successfully.')
+
+    if config.get("merge_schema"):
+        schema_file_path = config.get("schema_to_merge_path")
+        with open(schema_file_path, 'r') as file:
+            schema_content = file.read()
+        schema_parser = SchemaParser(config, schema_content)
+        schema_parser.parse_schema()
+        original_node_types = schema_parser.get_node_types()
+        original_edge_types = schema_parser.get_edge_types()
+        schema_merger = SchemaMerger(config)
+        merged_node_types, merged_edge_types = schema_merger.merge_schemas(original_node_types, original_edge_types, graph_type.node_types, graph_type.edge_types)
+        graph_type.node_types = merged_node_types
+        graph_type.edge_types = merged_edge_types
+        graph_type.create_schema(name="merged_schema.pgs")
+
+        logger.info(f'Graph merged the new schema with the original one.')
 
 
 if __name__ == "__main__":

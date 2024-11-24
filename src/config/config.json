@@ -6,7 +6,7 @@
         "password": "password"
     },
     "graph_generator": true,
-    "graph_generator_schema_path": "..\\schema_examples/schema4fun.pgs",
+    "graph_generator_schema_path": "..\\schema_examples/schema1.pgs",
     "node_type_extraction": "label_based",
     "edge_type_extraction":"label_based",
     "out_dir": "..\\results\\",
@@ -17,7 +17,6 @@
     "endpoint_outlier_threshold": 0,
     "merge_threshold": 0.8,
     "graph_type_name": "GraphTypeExample",
-    "graph_type_mode": "LOOSE",
     "open_labels": true,
     "open_properties": true,
     "abstract_type_threshold": 0.4,
@@ -26,5 +25,8 @@
     "max_node_types": 5,
     "max_edge_types": 1,
     "max_types": true,
-    "validate_graph":  true
+    "validate_graph":  true,
+    "merge_schema": true,
+    "schema_to_merge_path": "..\\schema_examples/schema4fun.pgs",
+    "schema_merge_threshold": 0.4
 }

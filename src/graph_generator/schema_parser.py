@@ -1,10 +1,14 @@
 import re
 
+from src.graph_type.type import Type
+
+
 class SchemaParser:
     """
     Parses a simplified version of the PG Schema and creates types instances.
     """
-    def __init__(self, schema_text):
+    def __init__(self, config, schema_text):
+        self.config = config
         self.schema_text = schema_text
         self.node_types = {}
         self.edge_types = {}
@@ -255,3 +259,34 @@ class SchemaParser:
             'optional_properties': inherited_optional_properties
         }
 
+    def get_node_types(self):
+        """
+        Returns the parsed node types as Type objects.
+
+        @:return Parsed node types as Type objects.
+        """
+        types = []
+        for node_type_name, node_type_def in self.node_types.items():
+            type_ = Type(self.config, 0, node_type_def.get("labels", []), node_type_def.get("properties", {}), node_type_def.get("supertypes", []),[], "NODE", node_type_def["abstract"])
+            type_.optional_labels = set(node_type_def.get("optional_labels", []))
+            type_.optional_properties = node_type_def.get("optional_properties", [])
+            type_.name = node_type_name
+            types.append(type_)
+        return types
+
+    def get_edge_types(self):
+        """
+        Returns the parsed node types as Type objects.
+
+        @:return Parsed node types as Type objects.
+        """
+        types = []
+        for edge_type_name, edge_type_def in self.edge_types.items():
+            type_ = Type(self.config, 0, edge_type_def.get("labels", []), edge_type_def.get("properties", {}), edge_type_def.get("supertypes", []),[], "NODE", edge_type_def["abstract"])
+            type_.optional_labels = set(edge_type_def.get("optional_labels", []))
+            type_.optional_properties = edge_type_def.get("optional_properties", [])
+            type_.start_node_types = set(edge_type_def.get("start_node_types", []))
+            type_.end_node_types = set(edge_type_def.get("end_node_types", []))
+            type_.name = edge_type_name
+            types.append(type_)
+        return types

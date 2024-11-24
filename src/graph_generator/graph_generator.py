@@ -9,8 +9,8 @@ class GraphGenerator:
     """
     Creates a graph data instance based on a schema.
     """
-    def __init__(self, schema):
-        self.schema = schema
+    def __init__(self, parser):
+        self.parser = parser
         self.graph_data = GraphData()
         self.node_type_to_nodes = {}
 
@@ -81,7 +81,7 @@ class GraphGenerator:
         @param max_number_of_elements: Maximum number of elements to be created for each type.
         @:return: A graph data instance based on the specified schema.
         """
-        for node_type_name, node_type_def in self.schema.node_types.items():
+        for node_type_name, node_type_def in self.parser.node_types.items():
             if node_type_def["abstract"]:
                 continue
             num_nodes = random.randint(min_number_of_elements, max_number_of_elements)
@@ -106,7 +106,7 @@ class GraphGenerator:
                 self.graph_data.add_node(node)
                 self.node_type_to_nodes[node_type_name].append(node_id)
 
-        for edge_type_name, edge_type_def in self.schema.edge_types.items():
+        for edge_type_name, edge_type_def in self.parser.edge_types.items():
             if edge_type_def["abstract"]:
                 continue
             num_edges = random.randint(min_number_of_elements, max_number_of_elements)
@@ -117,15 +117,17 @@ class GraphGenerator:
                 start_node_type_options = edge_type_def["start_node_types"]
                 end_node_type_options = edge_type_def["end_node_types"]
 
-                start_node_id = None
-                while not start_node_id:
-                    start_node_type = random.choice(start_node_type_options)
-                    start_node_id = self._get_random_node_from_type(start_node_type)
+                start_node_type = random.choice(start_node_type_options)
+                start_node_id = self._get_random_node_from_type(start_node_type)
 
-                end_node_id = None
-                while not end_node_id:
-                    end_node_type = random.choice(end_node_type_options)
-                    end_node_id = self._get_random_node_from_type(end_node_type)
+                if start_node_id == None:
+                    raise ValueError(f"Wrong definition of Endpoint Types.")
+
+                end_node_type = random.choice(end_node_type_options)
+                end_node_id = self._get_random_node_from_type(end_node_type)
+
+                if end_node_id == None:
+                    raise ValueError(f"Wrong definition of Endpoint Types.")
 
                 labels = edge_type_def["labels"]
 

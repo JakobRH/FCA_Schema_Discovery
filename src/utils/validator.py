@@ -111,10 +111,10 @@ class Validator:
         start_node = valid_nodes.get(edge.start_node_id)
         end_node = valid_nodes.get(edge.end_node_id)
 
-        if not self._node_conforms_to_any_type(start_node, edge_type.startpoint_types):
+        if not self._node_conforms_to_any_type(start_node, edge_type.start_node_types):
             return False
 
-        if not self._node_conforms_to_any_type(end_node, edge_type.endpoint_types):
+        if not self._node_conforms_to_any_type(end_node, edge_type.end_node_types):
             return False
 
         return True
