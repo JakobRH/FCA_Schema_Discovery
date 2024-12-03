@@ -29,8 +29,8 @@ def main():
             schema_content = file.read()
         schema_parser = SchemaParser(config, schema_content)
         schema_parser.parse_schema()
-        graph_generator = GraphGenerator(schema_parser)
-        graph_data = graph_generator.generate_graph(10000, 100000)
+        graph_generator = GraphGenerator(schema_parser, config)
+        graph_data = graph_generator.generate_graph()
         logger.info(f'Graph successfully generated. Graph has {len(graph_data.nodes)} nodes and {len(graph_data.edges)} edges.')
     else:
         extractor = ExtractorFactory.get_extractor(config)
@@ -75,7 +75,7 @@ def main():
         merged_node_types, merged_edge_types = schema_merger.merge_schemas(original_node_types, original_edge_types, graph_type.node_types, graph_type.edge_types)
         graph_type.node_types = merged_node_types
         graph_type.edge_types = merged_edge_types
-        graph_type.create_schema(name="merged_schema.pgs")
+        graph_type.create_schema(name="merged_schema.pgs", nodes_and_edges=False)
 
         logger.info(f'Graph merged the new schema with the original one.')
 

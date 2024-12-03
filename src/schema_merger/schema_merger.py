@@ -116,6 +116,7 @@ class SchemaMerger:
                 self.type_mapping[o_type.name] = o_type.name
 
         for n_type in new_types:
+            #TODO: check merged type list for matach-test case Schema 1 has two types for the same but not merged
             merged_types.append(n_type)
             self.type_mapping[n_type.name] = n_type.name + "_new"
             n_type.name = n_type.name + "_new"

@@ -62,10 +62,10 @@ class TypeExtractor:
         if self.extraction_mode == "EDGE":
             self._compute_endpoints(types)
 
-        if self.config.get("remove_inherited_features"):
-            type_dict = {type_.name: type_ for type_ in types}
-            for type_ in types:
-                type_.remove_inherited_features(type_dict)
+
+        type_dict = {type_.name: type_ for type_ in types}
+        for type_ in types:
+            type_.remove_inherited_features(type_dict)
 
         return types
 
@@ -257,7 +257,7 @@ class TypeExtractor:
 
                 if data['count'] == total_elements:
                     type_instance.properties[prop] = data_type
-                elif data['count'] >= threshold:
+                elif data['count'] >= threshold and self.config.get("optional_properties"):
                     type_instance.optional_properties[prop] = data_type
 
     def _compute_labels(self, types):
@@ -290,7 +290,7 @@ class TypeExtractor:
             for label, count in label_counts.items():
                 if count == total_nodes:
                     type_instance.labels.add(label)
-                elif count >= threshold:
+                elif count >= threshold and self.config.get("optional_labels"):
                     type_instance.optional_labels.add(label)
 
     def _find_most_similar_supertype(self, subtype, types):

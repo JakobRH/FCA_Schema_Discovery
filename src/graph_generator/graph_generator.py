@@ -9,7 +9,8 @@ class GraphGenerator:
     """
     Creates a graph data instance based on a schema.
     """
-    def __init__(self, parser):
+    def __init__(self, parser, config):
+        self.config = config
         self.parser = parser
         self.graph_data = GraphData()
         self.node_type_to_nodes = {}
@@ -71,7 +72,7 @@ class GraphGenerator:
             return random.choice(self.node_type_to_nodes[node_type])
         return None
 
-    def generate_graph(self, min_number_of_elements, max_number_of_elements):
+    def generate_graph(self):
         """
         Generates a graph data instance based on the given schema. For each type
         a number between min_number_of_elements and max_number_of_elements of
@@ -81,6 +82,8 @@ class GraphGenerator:
         @param max_number_of_elements: Maximum number of elements to be created for each type.
         @:return: A graph data instance based on the specified schema.
         """
+        min_number_of_elements = self.config.get("graph_generator_min_entities")
+        max_number_of_elements = self.config.get("graph_generator_max_entities")
         for node_type_name, node_type_def in self.parser.node_types.items():
             if node_type_def["abstract"]:
                 continue
