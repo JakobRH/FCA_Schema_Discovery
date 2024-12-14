@@ -39,11 +39,13 @@ class TypeExtractor:
 
         types = self._initialize_types(approach)
         self._remove_elements_in_subtypes(types)
+        self._remove_type_outliers(types)
 
         if approach == "label_based":
             self._compute_properties(types)
         if approach == "property_based":
             self._compute_labels(types)
+        self._check_for_supertype_consistency(types)
 
         if (approach == "label_based" and self.config.get("optional_labels")) or \
                 (approach == "property_based" and self.config.get("optional_properties")) or \
@@ -110,6 +112,8 @@ class TypeExtractor:
 
             type_ = Type(self.config, concept_id=concept_id, labels=labels, properties=properties,
                          supertypes=supertypes, subtypes=subtypes, entity=self.extraction_mode)
+            type_.open_labels = self.config.get("open_labels")
+            type_.open_properties = self.config.get("open_properties")
             for element in elements:
                 if self.extraction_mode == "NODE":
                     type_.add_node(element)
@@ -326,8 +330,6 @@ class TypeExtractor:
             if subtype.name in type_.supertypes:
                 type_.supertypes.remove(subtype.name)
                 type_.supertypes.add(supertype.name)
-            if supertype.name in type_.supertypes:
-                type_.supertypes.remove(supertype.name)
             if subtype.name in type_.subtypes:
                 type_.subtypes.remove(subtype.name)
 
@@ -478,6 +480,8 @@ class TypeExtractor:
         )
         abstract_type.optional_labels = shared_optional_labels
         abstract_type.optional_properties = shared_optional_properties
+        abstract_type.open_labels = self.config.get("open_labels")
+        abstract_type.open_properties = self.config.get("open_properties")
 
         type1.supertypes.add(abstract_type.name)
         type2.supertypes.add(abstract_type.name)
@@ -539,3 +543,67 @@ class TypeExtractor:
             edge_type.end_node_types = set(
                 [node_type for node_type, count in endpoint_candidates.items() if count >= threshold]
             )
+
+
+    def _remove_type_outliers(self, types):
+        """
+        Checks if the number of entities that belong to a type are bigger than the outlier threshold.
+        If not, the type will be removed.
+
+        @param types: A list types.
+        """
+        threshold = self.config.get("type_outlier_threshold")
+        type_dict = {t.name: t for t in types}
+        types_to_remove = []
+
+        for type_ in types:
+            entities = set()
+            if self.extraction_mode == "NODE":
+                entities = type_.nodes
+            if self.extraction_mode == "EDGE":
+                entities = type_.edges
+            if len(entities) < threshold:
+                for supertype_name in type_.supertypes:
+                    if supertype_name in type_dict:
+                        type_dict[supertype_name].subtypes.update(type_.subtypes)
+
+                for subtype_name in type_.subtypes:
+                    if subtype_name in type_dict:
+                        type_dict[subtype_name].supertypes.update(type_.supertypes)
+
+                types_to_remove.append(type_)
+
+        for type_ in types_to_remove:
+            types.remove(type_)
+
+    def _check_for_supertype_consistency(self, types):
+        """
+        Validates the supertype relations for a list of types. If a type does not meet
+        all the mandatory labels and properties of its supertypes, the invalid supertype
+        relationship is removed.
+
+        @param types: A list of Type instances.
+        """
+        type_dict = {t.name: t for t in types}
+
+        for type_ in types:
+            invalid_supertypes = set()
+
+            for supertype_name in type_.supertypes:
+                supertype = type_dict.get(supertype_name)
+
+                if not supertype.labels.issubset(type_.labels):
+                    invalid_supertypes.add(supertype_name)
+                    continue
+
+                if not all(
+                        key in type_.properties and type_.properties[key] == value
+                        for key, value in supertype.properties.items()
+                ):
+                    invalid_supertypes.add(supertype_name)
+
+            for invalid_supertype in invalid_supertypes:
+                type_.supertypes.remove(invalid_supertype)
+
+                if invalid_supertype in type_dict:
+                    type_dict[invalid_supertype].subtypes.discard(type_.name)

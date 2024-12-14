@@ -77,7 +77,7 @@ def main():
         graph_type.edge_types = merged_edge_types
         graph_type.create_schema(name="merged_schema.pgs", nodes_and_edges=False)
 
-        logger.info(f'Graph merged the new schema with the original one.')
+        logger.info(f'Merged the new schema with the original one.')
 
 
 if __name__ == "__main__":

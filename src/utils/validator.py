@@ -11,8 +11,6 @@ class Validator:
         self.node_types = node_types
         self.edge_types = edge_types
         self.config = config
-        self.open_labels = config.get("open_labels")
-        self.open_properties = config.get("open_properties")
         self.logger = logger
 
     def _gather_labels_and_properties(self, type_, types):
@@ -61,7 +59,7 @@ class Validator:
         if missing_labels:
             return False
 
-        if not self.open_labels and extra_labels:
+        if not node_type.open_labels and extra_labels:
             return False
 
         node_properties = set(node.properties.keys())
@@ -71,7 +69,7 @@ class Validator:
         if missing_properties:
             return False
 
-        if not self.open_properties and extra_properties:
+        if not node_type.open_properties and extra_properties:
             return False
 
         return True
@@ -95,7 +93,7 @@ class Validator:
         if missing_labels:
             return False
 
-        if not self.open_labels and extra_labels:
+        if not edge_type.open_labels and extra_labels:
             return False
 
         edge_properties = set(edge.properties.keys())
@@ -105,7 +103,7 @@ class Validator:
         if missing_properties:
             return False
 
-        if not self.open_properties and extra_properties:
+        if not edge_type.open_properties and extra_properties:
             return False
 
         start_node = valid_nodes.get(edge.start_node_id)

@@ -101,6 +101,7 @@ class Config:
             "out_dir": str,
             "optional_labels": bool,
             "optional_properties": bool,
+            "type_outlier_threshold": int,
             "label_outlier_threshold": int,
             "property_outlier_threshold": int,
             "endpoint_outlier_threshold": int,
@@ -124,6 +125,9 @@ class Config:
             "node_type_extraction": ["label_based", "property_based", "label_property_based"],
             "edge_type_extraction": ["label_based", "property_based", "label_property_based"]
         }
+
+        if self.get("graph_generator_max_entities") < self.get("graph_generator_min_entities"):
+            errors.append(f"graph_generator_max_entities has to be greater or equal than graph_generator_min_entities.")
 
         for field, expected_type in required_fields.items():
             value = self.get(field)

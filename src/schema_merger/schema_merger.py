@@ -116,7 +116,7 @@ class SchemaMerger:
                 self.type_mapping[o_type.name] = o_type.name
 
         for n_type in new_types:
-            #TODO: check merged type list for matach-test case Schema 1 has two types for the same but not merged
+            #TODO: check merged type list for match-test case Schema 1 has two types for the same but not merged
             merged_types.append(n_type)
             self.type_mapping[n_type.name] = n_type.name + "_new"
             n_type.name = n_type.name + "_new"
@@ -167,6 +167,8 @@ class SchemaMerger:
         merged_type.optional_labels = optional_labels
         merged_type.optional_properties = optional_properties
         merged_type.name = original_type.name
+        merged_type.open_labels = original_type.open_labels
+        merged_type.open_properties = original_type.open_properties
 
         if type_entity == "EDGE":
             merged_type.start_node_types = set()
@@ -214,13 +216,18 @@ class SchemaMerger:
                 supertype = type_dict[supertype_name]
 
                 has_all_labels = supertype.labels.issubset(type_.labels)
+                has_all_optional_labels = supertype.optional_labels.issubset(type_.optional_labels)
 
                 has_all_properties = all(
                     key in type_.properties and type_.properties[key] == value
                     for key, value in supertype.properties.items()
                 )
+                has_all_optional_properties = all(
+                    key in type_.optional_properties and type_.optional_properties[key] == value
+                    for key, value in supertype.optional_properties.items()
+                )
 
-                if has_all_labels and has_all_properties:
+                if has_all_labels and has_all_properties and has_all_optional_labels and has_all_optional_properties:
                     valid_supertypes.add(supertype_name)
 
             type_.supertypes = valid_supertypes

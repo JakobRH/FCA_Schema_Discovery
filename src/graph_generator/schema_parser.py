@@ -84,8 +84,10 @@ class SchemaParser:
             'supertypes': supertypes,
             'labels': labels['mandatory'],
             'optional_labels': labels['optional'],
+            'open_labels': labels['open'],
             'properties': properties['mandatory'],
-            'optional_properties': properties['optional']
+            'optional_properties': properties['optional'],
+            'open_properties': properties['open']
         }
 
     def _parse_edge_type(self, definition):
@@ -118,8 +120,10 @@ class SchemaParser:
             'supertypes': supertypes,
             'labels': labels['mandatory'],
             'optional_labels': labels['optional'],
+            'open_labels': labels['open'],
             'properties': properties['mandatory'],
-            'optional_properties': properties['optional']
+            'optional_properties': properties['optional'],
+            'open_properties': properties['open']
         }
 
     def _parse_supertypes_and_labels(self, part):
@@ -130,9 +134,11 @@ class SchemaParser:
         :return: A tuple (supertypes, labels) where labels is a dictionary with 'mandatory' and 'optional' keys.
         """
         supertypes = []
-        labels = {'mandatory': [], 'optional': []}
+        labels = {'mandatory': [], 'optional': [], 'open': False}
 
-        part = part.replace("OPEN", "").strip()
+        if "OPEN" in part:
+            labels['open'] = True
+            part = part.replace("OPEN", "").strip()
 
         if '&' in part:
             components = [comp.strip() for comp in part.split('&')]
@@ -164,7 +170,11 @@ class SchemaParser:
         :param properties_str: A string containing the properties defined in a node or edge.
         :return: A dictionary with 'mandatory' and 'optional' keys, each containing properties.
         """
-        properties = {'mandatory': {}, 'optional': {}}
+        properties = {'mandatory': {}, 'optional': {}, 'open': False}
+
+        if "OPEN" in properties_str:
+            properties['open'] = True
+
         if properties_str:
             properties_str = properties_str.replace(", OPEN", "").strip('{} ')
             for prop in properties_str.split(','):
@@ -271,6 +281,8 @@ class SchemaParser:
             type_.optional_labels = set(node_type_def.get("optional_labels", []))
             type_.optional_properties = node_type_def.get("optional_properties", [])
             type_.name = node_type_name
+            type_.open_labels = node_type_def["open_labels"]
+            type_.open_properties = node_type_def["open_properties"]
             types.append(type_)
         return types
 
@@ -288,5 +300,7 @@ class SchemaParser:
             type_.start_node_types = set(edge_type_def.get("start_node_types", []))
             type_.end_node_types = set(edge_type_def.get("end_node_types", []))
             type_.name = edge_type_name
+            type_.open_labels = edge_type_def["open_labels"]
+            type_.open_properties = edge_type_def["open_properties"]
             types.append(type_)
         return types

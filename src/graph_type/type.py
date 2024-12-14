@@ -32,6 +32,8 @@ class Type:
         self.start_node_types = set()
         self.end_node_types = set()
         self.name = self._generate_name()
+        self.open_labels = False
+        self.open_properties = False
 
     def add_node(self, node):
         """
@@ -89,7 +91,7 @@ class Type:
         labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
         properties_spec = f" {self._format_properties()}" if self.properties or self.optional_properties else ""
         abstract = "ABSTRACT " if self.is_abstract else ""
-        open_labels = " OPEN" if self.config.get("open_labels") else ""
+        open_labels = " OPEN" if self.open_labels else ""
         return f"{abstract}({self.name}{labels_spec}{open_labels}{properties_spec})"
 
     def _to_edge_schema(self):
@@ -101,7 +103,7 @@ class Type:
         """
         labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
         properties_spec = f"{self._format_properties()}" if self.properties or self.optional_properties else ""
-        open_labels = " OPEN" if self.config.get("open_labels") else ""
+        open_labels = " OPEN" if self.open_labels else ""
         middle_type = f"[{self.name} {labels_spec}{open_labels} {properties_spec}]"
         start_type = f"({self._format_endpoints(self.start_node_types)})"
         end_type = f"({self._format_endpoints(self.end_node_types)})"
@@ -134,7 +136,7 @@ class Type:
         for key, value in self.optional_properties.items():
             properties.append(f"OPTIONAL {key} {value}")
 
-        include_open = self.config.get("open_properties")
+        include_open = self.open_properties
         properties_str = ", ".join(properties)
 
         if properties_str or include_open:
