@@ -88,7 +88,7 @@ class Type:
 
         @return: A string representing the node schema, including labels and properties.
         """
-        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
+        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ":"
         properties_spec = f" {self._format_properties()}" if self.properties or self.optional_properties else ""
         abstract = "ABSTRACT " if self.is_abstract else ""
         open_labels = " OPEN" if self.open_labels else ""
@@ -101,7 +101,7 @@ class Type:
 
         @return: A string representing the edge schema, including start and endpoint types and properties.
         """
-        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ""
+        labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ":"
         properties_spec = f"{self._format_properties()}" if self.properties or self.optional_properties else ""
         open_labels = " OPEN" if self.open_labels else ""
         middle_type = f"[{self.name} {labels_spec}{open_labels} {properties_spec}]"

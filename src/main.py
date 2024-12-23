@@ -9,14 +9,21 @@ from src.schema_merger.schema_merger import SchemaMerger
 from src.utils.validator import Validator
 from utils.logger import setup_logger
 from fca.fca_helper import FCAHelper
-
+import time
 
 def main():
     parser = argparse.ArgumentParser(description='Schema Extractor Tool')
     parser.add_argument('--config', type=str, help='Path to config file', default='config\config.json')
     args = parser.parse_args()
+
     logger = setup_logger('schema_extractor', 'schema_extractor.log')
-    logger.info('Start Schmema Discovery.')
+    start_time = time.time()
+
+    def log_with_time(message):
+        elapsed = time.time() - start_time
+        logger.info(f"[{elapsed:.2f}s] {message}")
+
+    log_with_time('Start Schema Discovery.')
 
     config = Config(logger, args.config)
     if not config.validate_config():
@@ -31,12 +38,12 @@ def main():
         schema_parser.parse_schema()
         graph_generator = GraphGenerator(schema_parser, config)
         graph_data = graph_generator.generate_graph()
-        logger.info(f'Graph successfully generated. Graph has {len(graph_data.nodes)} nodes and {len(graph_data.edges)} edges.')
+        log_with_time(f'Graph successfully generated. Graph has {len(graph_data.nodes)} nodes and {len(graph_data.edges)} edges.')
     else:
         extractor = ExtractorFactory.get_extractor(config)
         extractor.extract_graph_data()
         graph_data = extractor.graph_data
-        logger.info('Data successfully extracted.')
+        log_with_time('Data successfully extracted.')
 
     graph_data.infer_property_data_types()
 
@@ -44,15 +51,18 @@ def main():
     node_fca_helper = FCAHelper(config)
     graph_type = GraphType(config)
     node_fca_helper.generate_node_concept_lattice(graph_data)
-    logger.info('Node Concept Lattice successfully generated.')
+    log_with_time('Node Concept Lattice successfully generated.')
+
     type_extractor = TypeExtractor(config, node_fca_helper, graph_data, graph_type, "NODE")
     graph_type.node_types = type_extractor.extract_types()
-    logger.info('Node Types successfully extracted.')
+    log_with_time('Node Types successfully extracted.')
+
     node_fca_helper.generate_edge_concept_lattice(graph_data)
-    logger.info('Edge Concept Lattice successfully generated.')
+    log_with_time('Edge Concept Lattice successfully generated.')
+
     type_extractor.extraction_mode = "EDGE"
     graph_type.edge_types = type_extractor.extract_types()
-    logger.info('Edge Types successfully extracted.')
+    log_with_time('Edge Types successfully extracted.')
 
     # Step 3: Create schema
     graph_type.create_schema()
@@ -60,8 +70,9 @@ def main():
     if config.get("validate_graph"):
         validator = Validator(graph_data, graph_type.node_types, graph_type.edge_types, config, logger)
         validator.validate_graph()
+        log_with_time('Graph validation completed.')
 
-    logger.info('Schema extraction completed successfully.')
+    log_with_time('Schema extraction completed successfully.')
 
     if config.get("merge_schema"):
         schema_file_path = config.get("schema_to_merge_path")
@@ -77,8 +88,10 @@ def main():
         graph_type.edge_types = merged_edge_types
         graph_type.create_schema(name="merged_schema.pgs", nodes_and_edges=False)
 
-        logger.info(f'Merged the new schema with the original one.')
+        log_with_time(f'Merged the new schema with the original one.')
 
+    total_time = time.time() - start_time
+    log_with_time(f'Total execution time: {total_time:.2f}s')
 
 if __name__ == "__main__":
     main()

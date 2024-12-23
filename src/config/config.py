@@ -106,6 +106,7 @@ class Config:
             "property_outlier_threshold": int,
             "endpoint_outlier_threshold": int,
             "merge_threshold": float,
+            "remove_empty_types": bool,
             "graph_type_name": str,
             "open_labels": bool,
             "open_properties": bool,

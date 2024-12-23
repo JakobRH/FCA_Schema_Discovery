@@ -31,7 +31,7 @@ class GraphGenerator:
         @param data_type: The type of the value to generate.
         @return: A random value corresponding to the data type or None if the data type is unknown.
         """
-        if data_type == "STRING":
+        if data_type == "STRING" or data_type == "UNKNOWN":
             return self._random_string()
         elif data_type == "INTEGER":
             return random.randint(0, 100)
@@ -117,8 +117,23 @@ class GraphGenerator:
             for _ in range(num_edges):
                 edge_id = f"edge_{len(self.graph_data.edges) + 1}"
 
-                start_node_type_options = edge_type_def["start_node_types"]
-                end_node_type_options = edge_type_def["end_node_types"]
+                start_node_type_options = []
+                end_node_type_options = []
+
+                for start_node_type in edge_type_def["start_node_types"]:
+                    subtypes = [
+                        node_name for node_name, node_def in self.parser.node_types.items()
+                        if start_node_type in node_def['supertypes']
+                    ]
+                    start_node_type_options.append(start_node_type)
+                    start_node_type_options.extend(subtypes)
+                for end_node_type in edge_type_def["end_node_types"]:
+                    subtypes = [
+                        node_name for node_name, node_def in self.parser.node_types.items()
+                        if end_node_type in node_def['supertypes']
+                    ]
+                    end_node_type_options.append(end_node_type)
+                    end_node_type_options.extend(subtypes)
 
                 start_node_type = random.choice(start_node_type_options)
                 start_node_id = self._get_random_node_from_type(start_node_type)

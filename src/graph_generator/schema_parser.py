@@ -56,7 +56,7 @@ class SchemaParser:
        :param definition: A string representing a schema definition.
        :return: True if the definition is for an edge type, False otherwise.
        """
-        edge_pattern = r'^(ABSTRACT\s+)?\(\s*:.*?\)\s*-\[.*?\]\s*->\(\s*:.*?\)\s*$'
+        edge_pattern = r'^(ABSTRACT\s+)?\(\s*:.*?\)\s*-\s*\[.*?\]\s*->\s*\(\s*:.*?\)\s*$'
         return re.match(edge_pattern, definition) is not None
 
     def _parse_node_type(self, definition):
@@ -101,7 +101,7 @@ class SchemaParser:
         if is_abstract:
             definition = definition[len("ABSTRACT"):].strip()
 
-        edge_pattern = r'\(\s*:([A-Za-z0-9_|\s]*)\)\s*-\[(\w+)\s*:\s*([A-Za-z0-9_&?\s]*)\s*(\{.*?\})?\s*\]->\(\s*:([A-Za-z0-9_|\s]*)\)\s*'
+        edge_pattern = r'\(\s*:([A-Za-z0-9_\|\s]*)\)\s*-\s*\[([A-Za-z0-9_&?\s]*)\s*:\s*([A-Za-z0-9_&?\s]*)\s*(\{.*?\})?\s*\]\s*->\s*\(\s*:([A-Za-z0-9_\|\s]*)\)\s*'
         match = re.match(edge_pattern, definition)
         if not match:
             raise ValueError(f"Invalid edge type definition: {definition}")
@@ -135,6 +135,9 @@ class SchemaParser:
         """
         supertypes = []
         labels = {'mandatory': [], 'optional': [], 'open': False}
+
+        if part == "":
+            return supertypes, labels
 
         if "OPEN" in part:
             labels['open'] = True
@@ -171,7 +174,8 @@ class SchemaParser:
         :return: A dictionary with 'mandatory' and 'optional' keys, each containing properties.
         """
         properties = {'mandatory': {}, 'optional': {}, 'open': False}
-
+        if properties_str == None or properties_str == "{}":
+            return properties
         if "OPEN" in properties_str:
             properties['open'] = True
 

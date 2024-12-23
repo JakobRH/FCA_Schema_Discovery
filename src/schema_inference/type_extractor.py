@@ -38,8 +38,7 @@ class TypeExtractor:
             approach = self.config.get("edge_type_extraction")
 
         types = self._initialize_types(approach)
-        self._remove_elements_in_subtypes(types)
-        self._remove_type_outliers(types)
+        self._remove_type_outliers(types, self.config.get("type_outlier_threshold"))
 
         if approach == "label_based":
             self._compute_properties(types)
@@ -64,6 +63,9 @@ class TypeExtractor:
         if self.extraction_mode == "EDGE":
             self._compute_endpoints(types)
 
+        self._remove_elements_in_subtypes(types)
+        if self.config.get("remove_empty_types"):
+            self._remove_type_outliers(types)
 
         type_dict = {type_.name: type_ for type_ in types}
         for type_ in types:
@@ -97,7 +99,6 @@ class TypeExtractor:
                 continue
             if concept_id == bottom_concept_id and remove_bottom_concept:
                 continue
-
             labels, properties = self._set_lattice_intent(concept.intent, approach)
             elements = concept.extent
             if self.extraction_mode == "NODE":
@@ -192,7 +193,7 @@ class TypeExtractor:
     def _remove_elements_in_subtypes(self, types):
         """
         Removes nodes or edges from a type if they are present in one of its subtypes.
-        Operates recursively based on the type's subtype hierarchy.
+        Operates recursively based on the types subtype hierarchy.
 
         @param types: Types List.
         @return Updated Types List.
@@ -545,14 +546,13 @@ class TypeExtractor:
             )
 
 
-    def _remove_type_outliers(self, types):
+    def _remove_type_outliers(self, types, threshold=1):
         """
         Checks if the number of entities that belong to a type are bigger than the outlier threshold.
         If not, the type will be removed.
 
         @param types: A list types.
         """
-        threshold = self.config.get("type_outlier_threshold")
         type_dict = {t.name: t for t in types}
         types_to_remove = []
 
@@ -575,6 +575,11 @@ class TypeExtractor:
 
         for type_ in types_to_remove:
             types.remove(type_)
+
+        removed_type_names = {t.name for t in types_to_remove}
+        for type_ in types:
+            type_.supertypes.difference_update(removed_type_names)
+            type_.subtypes.difference_update(removed_type_names)
 
     def _check_for_supertype_consistency(self, types):
         """

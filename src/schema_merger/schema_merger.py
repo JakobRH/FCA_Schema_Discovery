@@ -116,7 +116,6 @@ class SchemaMerger:
                 self.type_mapping[o_type.name] = o_type.name
 
         for n_type in new_types:
-            #TODO: check merged type list for match-test case Schema 1 has two types for the same but not merged
             merged_types.append(n_type)
             self.type_mapping[n_type.name] = n_type.name + "_new"
             n_type.name = n_type.name + "_new"
@@ -167,8 +166,8 @@ class SchemaMerger:
         merged_type.optional_labels = optional_labels
         merged_type.optional_properties = optional_properties
         merged_type.name = original_type.name
-        merged_type.open_labels = original_type.open_labels
-        merged_type.open_properties = original_type.open_properties
+        merged_type.open_labels = original_type.open_labels | new_type.open_labels
+        merged_type.open_properties = original_type.open_properties | new_type.open_properties
 
         if type_entity == "EDGE":
             merged_type.start_node_types = set()
@@ -231,20 +230,3 @@ class SchemaMerger:
                     valid_supertypes.add(supertype_name)
 
             type_.supertypes = valid_supertypes
-
-    def _filter_subtypes(self, point_types, node_types):
-        """
-        Filters out subtypes from a set of point types, ensuring only the most specific types remain.
-
-        @param point_types: A set of point types to be filtered.
-        @param node_types: A list of all node types used to find subtypes.
-        @return: None
-        """
-        to_remove = set()
-        type_dict = {type_.name: type_ for type_ in node_types}
-        for node_type in point_types:
-            supertypes = type_dict.get(node_type).get_all_supertypes(type_dict)
-            if any(supertype in point_types for supertype in supertypes):
-                to_remove.add(node_type)
-
-        point_types.difference_update(to_remove)
