@@ -104,7 +104,6 @@ class SchemaMerger:
                 if similarity > self.config.get("schema_merge_threshold") and similarity > best_similarity:
                     best_match = n_type
                     best_similarity = similarity
-
             if best_match:
                 merged_type = self._merge_two_types(o_type, best_match, type_entity)
                 merged_types.append(merged_type)

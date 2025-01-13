@@ -39,6 +39,7 @@ class TypeExtractor:
 
         types = self._initialize_types(approach)
         self._remove_type_outliers(types, self.config.get("type_outlier_threshold"))
+        self._remove_elements_in_subtypes(types)
 
         if approach == "label_based":
             self._compute_properties(types)
@@ -63,7 +64,6 @@ class TypeExtractor:
         if self.extraction_mode == "EDGE":
             self._compute_endpoints(types)
 
-        self._remove_elements_in_subtypes(types)
         if self.config.get("remove_empty_types"):
             self._remove_type_outliers(types)
 
@@ -205,9 +205,8 @@ class TypeExtractor:
                 for subtype in all_subtypes:
                     type_obj.nodes.difference_update(type_dict[subtype].nodes)
 
-            elif self == self.extraction_mode == 'EDGE':
+            elif self.extraction_mode == 'EDGE':
                 all_subtypes = self._get_all_subtypes(type_obj, type_dict)
-
                 for subtype in all_subtypes:
                     type_obj.edges.difference_update(type_dict[subtype].edges)
 
@@ -557,6 +556,8 @@ class TypeExtractor:
         types_to_remove = []
 
         for type_ in types:
+            if type_.is_abstract:
+                continue
             entities = set()
             if self.extraction_mode == "NODE":
                 entities = type_.nodes

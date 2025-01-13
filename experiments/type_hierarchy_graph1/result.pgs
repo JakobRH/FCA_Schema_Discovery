@@ -1,0 +1,8 @@
+CREATE GRAPH TYPE ResultGraphType STRICT {
+(NodeType1: Person {age INTEGER, name STRING}),
+(NodeType2: Worker {craft STRING}),
+(NodeType3: NodeType1 & NodeType2 {employee_id INTEGER, salary FLOAT}),
+(NodeType4: NodeType1 & Customer? {username STRING}),
+(NodeType5: NodeType3 {manager_level STRING}),
+(:NodeType3|NodeType5) - [EdgeType0 : supervises ] -> (:NodeType5)
+}

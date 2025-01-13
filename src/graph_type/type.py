@@ -102,9 +102,9 @@ class Type:
         @return: A string representing the edge schema, including start and endpoint types and properties.
         """
         labels_spec = f": {self._format_labels()}" if self.labels or self.optional_labels or self.supertypes else ":"
-        properties_spec = f"{self._format_properties()}" if self.properties or self.optional_properties else ""
+        properties_spec = f" {self._format_properties()}" if self.properties or self.optional_properties else ""
         open_labels = " OPEN" if self.open_labels else ""
-        middle_type = f"[{self.name} {labels_spec}{open_labels} {properties_spec}]"
+        middle_type = f"[{self.name} {labels_spec}{open_labels}{properties_spec}]"
         start_type = f"({self._format_endpoints(self.start_node_types)})"
         end_type = f"({self._format_endpoints(self.end_node_types)})"
         abstract = "ABSTRACT " if self.is_abstract else ""
@@ -168,9 +168,9 @@ class Type:
         if self.is_abstract:
             name = "Abstract"
             if self.entity == "NODE":
-                name += "NodeType" + "+".join(self.subtypes)
+                name += "NodeType" + "".join(self.subtypes)
             if self.entity == "EDGE":
-                name += "EdgeType" + "+".join(self.subtypes)
+                name += "EdgeType" + "".join(self.subtypes)
             return name
         if self.entity == "NODE":
             return "NodeType" + str(self.concept_id)

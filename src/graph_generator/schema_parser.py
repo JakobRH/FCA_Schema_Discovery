@@ -298,7 +298,7 @@ class SchemaParser:
         """
         types = []
         for edge_type_name, edge_type_def in self.edge_types.items():
-            type_ = Type(self.config, 0, edge_type_def.get("labels", []), edge_type_def.get("properties", {}), edge_type_def.get("supertypes", []),[], "NODE", edge_type_def["abstract"])
+            type_ = Type(self.config, 0, edge_type_def.get("labels", []), edge_type_def.get("properties", {}), edge_type_def.get("supertypes", []),[], "EDGE", edge_type_def["abstract"])
             type_.optional_labels = set(edge_type_def.get("optional_labels", []))
             type_.optional_properties = edge_type_def.get("optional_properties", [])
             type_.start_node_types = set(edge_type_def.get("start_node_types", []))

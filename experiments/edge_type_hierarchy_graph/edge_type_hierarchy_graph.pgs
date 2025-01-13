@@ -1,0 +1,9 @@
+CREATE GRAPH TYPE EdgeTypeHierarchyGraph {
+(CityType: City {name STRING, population INTEGER}),
+(StationType: Station {station_name STRING}),
+(VehicleType: Vehicle {vehicle_id STRING, capacity INTEGER}),
+(:CityType)-[ConnectionType: connects {distance FLOAT}]->(:CityType),
+(:StationType)-[RailConnectionType: ConnectionType {track_type STRING}]->(:StationType),
+(:CityType)-[AirConnectionType: ConnectionType {flight_duration FLOAT}]->(:CityType),
+(:StationType)-[BusConnectionType: ConnectionType {route_number INTEGER}]->(:StationType)
+}

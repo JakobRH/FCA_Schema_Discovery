@@ -1,0 +1,12 @@
+CREATE GRAPH TYPE TypeHierarchyGraph3 {
+(PersonType: Person {name STRING, department STRING}),
+(ProfessorType: PersonType {professor_id INTEGER}),
+(PhDStudentType: PersonType {student_id INTEGER, research_topic STRING}),
+(ResearchAssistantType: PersonType {assistant_id INTEGER, project_name STRING}),
+(PrincipalInvestigatorType: ProfessorType & PhDStudentType & ResearchAssistantType {grant_id STRING}),
+(LeadResearcherType: PrincipalInvestigatorType {lead_project STRING}),
+(JuniorResearcherType: PrincipalInvestigatorType {research_assistant STRING}),
+(ProjectManagerType: PrincipalInvestigatorType {project_schedule STRING}),
+(:LeadResearcherType)-[Mentors: mentors]->(:JuniorResearcherType),
+(:JuniorResearcherType)-[Assists: assists]->(:ProjectManagerType)
+}

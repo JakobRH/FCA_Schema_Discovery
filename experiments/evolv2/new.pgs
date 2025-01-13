@@ -1,0 +1,11 @@
+CREATE GRAPH TYPE SmallUniversityGraphType
+(StudentType: Person & Student {student_id INTEGER, name STRING, birthdate DATE}),
+(ProfessorType: Person & Professor {professor_id INTEGER, name STRING, birthdate DATE}),
+(StaffType: Person & Staff {staff_id INTEGER, role STRING, name STRING, birthdate DATE}),
+(CourseType: Course {course_id STRING, credits INTEGER}),
+(DepartmentType: Department {dept_name STRING, OPTIONAL location STRING}),
+(:StudentType) - [EnrolledInType: enrolled_in {semester STRING}] -> (:CourseType),
+(:ProfessorType) - [TeachesType: teaches {semester STRING}] -> (:CourseType),
+(:ProfessorType) - [MemberOfType: member_of {since DATE}] -> (:DepartmentType)
+}
+

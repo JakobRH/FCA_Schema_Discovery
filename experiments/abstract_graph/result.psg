@@ -1,0 +1,12 @@
+CREATE GRAPH TYPE ResultGraphType STRICT {
+(NodeType1: Team {team_id INTEGER, name STRING, manager_id INTEGER, department_id INTEGER}),
+(NodeType2: Project {project_id INTEGER, name STRING, budget FLOAT, department_id INTEGER}),
+(NodeType3: AbstractNodeTypeNodeType4+NodeType3 & Manager {manager_id INTEGER, department STRING}),
+(NodeType4: AbstractNodeTypeNodeType4+NodeType3 & Employee {employee_id INTEGER}),
+(NodeType5: Department {department_id INTEGER, name STRING, location STRING}),
+ABSTRACT (AbstractNodeTypeNodeType4+NodeType3: {name STRING, birthdate DATE, email STRING, phone_number STRING, address STRING}),
+(:NodeType4) - [EdgeType1 : works_in ] -> (:NodeType5),
+(:NodeType4) - [EdgeType2 : assigned_to ] -> (:NodeType2),
+(:NodeType3) - [EdgeType3 : oversees ] -> (:NodeType2),
+(:NodeType3) - [EdgeType4 : manages ] -> (:NodeType1)
+}

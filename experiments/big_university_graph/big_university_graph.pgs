@@ -1,0 +1,18 @@
+CREATE GRAPH TYPE BigUniversityGraphType {
+(PersonType: Person {name STRING, birthdate DATE}),
+(StudentType: PersonType & Student {student_id INTEGER}),
+(ProfessorType: PersonType & Professor {professor_id INTEGER, department STRING}),
+(StaffType: PersonType & Staff {staff_id INTEGER, role STRING}),
+(ResearcherType: ProfessorType & StaffType & Researcher {research_area STRING, lab STRING}),
+(CourseType: Course {course_id STRING, credits INTEGER}),
+(DepartmentType: Department {dept_name STRING, OPTIONAL location STRING}),
+(ClubType: Club {club_name STRING, OPTIONAL founded DATE}),
+(:StudentType) - [EnrolledInType: enrolled_in {semester STRING}] -> (:CourseType),
+(:ProfessorType) - [TeachesType: teaches {semester STRING, OPTIONAL is_online BOOLEAN}] -> (:CourseType),
+(:StaffType) - [ManagesType: manages {since DATE}] -> (:DepartmentType),
+(:ResearcherType) - [CollaboratesWithType: collaborates_with {project_name STRING}] -> (:ResearcherType),
+(:ProfessorType) - [AdvisorOfType: advisor_of] -> (:StudentType),
+(:StudentType) - [MemberOfType: member_of {since DATE}] -> (:ClubType),
+(:ProfessorType) - [MemberOfType: member_of {since DATE}] -> (:ClubType),
+(:StaffType) - [WorksAtType: works_at] -> (:DepartmentType)
+}

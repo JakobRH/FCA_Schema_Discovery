@@ -1,0 +1,4 @@
+precision: 1.0
+recall: 1.0
+F1: 1.0
+time: 47.4s

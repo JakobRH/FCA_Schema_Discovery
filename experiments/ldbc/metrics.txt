@@ -1,0 +1,5 @@
+417169 nodes and 831818 edges
+precision: 1.0
+recall: 1.0
+f1: 1.0
+time: 52.88

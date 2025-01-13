@@ -147,9 +147,10 @@ class GraphGenerator:
                 if end_node_id == None:
                     raise ValueError(f"Wrong definition of Endpoint Types.")
 
-                labels = edge_type_def["labels"]
+                labels = edge_type_def["labels"].copy()
 
                 for opt_label in edge_type_def.get("optional_labels", []):
+
                     if random.choice([True, False]):
                         labels.append(opt_label)
 

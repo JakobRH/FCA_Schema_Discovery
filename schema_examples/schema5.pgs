@@ -1,5 +1,0 @@
-CREATE GRAPH TYPE CyclicGraphType {
-  (UserType: Person {username STRING}),
-  (:UserType)-[Follows: follows]->(:UserType),
-  (:UserType)-[Blocks: blocks]->(:UserType)
-}

@@ -1,0 +1,15 @@
+CREATE GRAPH TYPE LibraryGraphType {
+(PersonType: {name STRING, membership_date DATE, OPTIONAL email STRING}),
+(MemberType: PersonType & Member {membership_number STRING}),
+(LibrarianType: PersonType & Librarian {staff_id INTEGER}),
+(BookType: {title STRING, author STRING, OPTIONAL genre STRING}),
+(PrintedBookType: BookType & PrintedBook? {pages INTEGER, publisher STRING}),
+(EbookType: BookType & Ebook? {file_size INTEGER, format STRING}),
+(CategoryType: Category {category_name STRING}),
+(SectionType: Section {section_name STRING, OPTIONAL floor INTEGER}),
+(:MemberType) - [BorrowsType: borrows {due_date DATE}] -> (:BookType),
+(:MemberType) - [ReservedType: reserves {reservation_time DATE}] -> (:BookType),
+(:LibrarianType) - [ManagesType: manages] -> (:SectionType),
+(:BookType) - [BelongsToType: belongs_to] -> (:CategoryType),
+(:BookType) - [LocatedInType: located_in] -> (:SectionType)
+}

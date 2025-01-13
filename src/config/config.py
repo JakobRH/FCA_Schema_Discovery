@@ -8,7 +8,7 @@ class Config:
     allowing command-line arguments to override specific configuration values.
     """
 
-    def __init__(self, logger, config_path='config\config.json'):
+    def __init__(self, logger, config_path='config/config.json'):
         """
         Initializes the Config class by loading the config from the provided
         JSON file and then overriding specific values with command-line arguments if provided.
@@ -18,7 +18,7 @@ class Config:
         """
         self.logger = logger
         self.config = self._load_config(config_path)
-        self._override_with_cli_args()
+        self._override_config_with_cli_args()
 
     def _load_config(self, config_path):
         """
@@ -26,40 +26,42 @@ class Config:
 
         :param config_path: The file path of the JSON configuration file.
         :return: A dict representing the loaded configuration.
-                """
+        """
         with open(config_path, 'r') as file:
             return json.load(file)
 
-    def _override_with_cli_args(self):
+    def _override_config_with_cli_args(self):
         """
-        Private method to parse command-line arguments and override specific values in
-        the configuration if those arguments are provided.
+        Dynamically parse command-line arguments and override specific values
+        in the configuration if those arguments are provided.
         """
         parser = argparse.ArgumentParser(description='Override config values.')
-        parser.add_argument('--data_source', type=str, help='Data source type')
-        parser.add_argument('--neo4j_uri', type=str, help='Neo4j URI')
-        parser.add_argument('--neo4j_user', type=str, help='Neo4j user')
-        parser.add_argument('--neo4j_password', type=str, help='Neo4j password')
-        parser.add_argument('--node_type_approach', type=str, help='Node type extraction approach')
-        parser.add_argument('--edge_type_approach', type=str, help='Edge type extraction approach')
-        parser.add_argument('--output_schema_file', type=str, help='Output schema file')
+
+        def add_arguments(prefix, config):
+            for key, value in config.items():
+                arg_name = f"--{prefix + '.' if prefix else ''}{key}"
+                if isinstance(value, dict):
+                    add_arguments(f"{prefix + '.' if prefix else ''}{key}", value)
+                else:
+                    arg_type = type(value)
+                    if value is None:
+                        arg_type = str
+                    parser.add_argument(arg_name, type=arg_type, help=f"Override {prefix}.{key}")
+
+        add_arguments("", self.config)
 
         args = parser.parse_args()
 
-        if args.data_source:
-            self.config['data_source'] = args.data_source
-        if args.neo4j_uri:
-            self.config['neo4j']['uri'] = args.neo4j_uri
-        if args.neo4j_user:
-            self.config['neo4j']['user'] = args.neo4j_user
-        if args.neo4j_password:
-            self.config['neo4j']['password'] = args.neo4j_password
-        if args.node_type_approach:
-            self.config['node_type_extraction']['approach'] = args.node_type_approach
-        if args.edge_type_approach:
-            self.config['edge_type_extraction']['approach'] = args.edge_type_approach
-        if args.output_schema_file:
-            self.config['output_schema_file'] = args.output_schema_file
+        def update_config(config, prefix=""):
+            for key, value in vars(args).items():
+                if value is not None:
+                    keys = key.split('.')
+                    sub_config = self.config
+                    for k in keys[:-1]:
+                        sub_config = sub_config.setdefault(k, {})
+                    sub_config[keys[-1]] = value
+
+        update_config(self.config)
 
     def get(self, key, default=None):
         """
@@ -129,6 +131,10 @@ class Config:
 
         if self.get("graph_generator_max_entities") < self.get("graph_generator_min_entities"):
             errors.append(f"graph_generator_max_entities has to be greater or equal than graph_generator_min_entities.")
+
+        if self.get("max_types"):
+            if self.get("max_node_types") == 0 or self.get("max_edge_types") == 0:
+                errors.append("max_node_types and max_edge_types have to be bigger than 0.")
 
         for field, expected_type in required_fields.items():
             value = self.get(field)

@@ -1,0 +1,9 @@
+CREATE GRAPH TYPE ResultGraphType STRICT {
+(CityType: City {name STRING, population INTEGER}),
+(StationType: Station {station_name STRING}),
+(VehicleType: Vehicle {vehicle_id STRING, capacity INTEGER}),
+(:CityType) - [ConnectionType : connects {distance FLOAT}] -> (:CityType),
+(:StationType) - [RailConnectionType : ConnectionType & by_railway? {track_type STRING}] -> (:StationType),
+() - [AirConnectionType : ConnectionType {flight_duration FLOAT}] -> (),
+(:StationType) - [EdgeType2_new : ConnectionType {route_number INTEGER}] -> (:StationType)
+}

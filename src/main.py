@@ -67,12 +67,12 @@ def main():
     # Step 3: Create schema
     graph_type.create_schema()
 
+    log_with_time('Schema extraction completed successfully.')
+
     if config.get("validate_graph"):
         validator = Validator(graph_data, graph_type.node_types, graph_type.edge_types, config, logger)
         validator.validate_graph()
         log_with_time('Graph validation completed.')
-
-    log_with_time('Schema extraction completed successfully.')
 
     if config.get("merge_schema"):
         schema_file_path = config.get("schema_to_merge_path")

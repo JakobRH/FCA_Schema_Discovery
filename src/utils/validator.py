@@ -109,13 +109,38 @@ class Validator:
         start_node = valid_nodes.get(edge.start_node_id)
         end_node = valid_nodes.get(edge.end_node_id)
 
-        if not self._node_conforms_to_any_type(start_node, edge_type.start_node_types):
+        all_start_node_types, all_end_node_types = self.retrieve_all_endnode_types(edge_type)
+
+        if not self._node_conforms_to_any_type(start_node, all_start_node_types):
             return False
 
-        if not self._node_conforms_to_any_type(end_node, edge_type.end_node_types):
+        if not self._node_conforms_to_any_type(end_node, all_end_node_types):
             return False
 
         return True
+
+    def retrieve_all_endnode_types(self, edge_type):
+        """
+        Retrieve all start node types and end node types for a type and its supertypes.
+
+        :param edge_type: The type object with `supertypes`, `start_node_types`, and `end_node_types` fields.
+        :return: A tuple containing two sets: (all_start_node_types, all_end_node_types)
+        """
+        all_start_node_types = set()
+        all_end_node_types = set()
+        type_dict = {type_obj.name: type_obj for type_obj in self.edge_types}
+
+        def gather_types(current_type):
+            all_start_node_types.update(current_type.start_node_types)
+            all_end_node_types.update(current_type.end_node_types)
+
+            for supertype_name in current_type.supertypes:
+                supertype = type_dict.get(supertype_name)
+                if supertype:
+                    gather_types(supertype)
+
+        gather_types(edge_type)
+        return all_start_node_types, all_end_node_types
 
     def _node_conforms_to_any_type(self, node, valid_type_names):
         """

@@ -1,0 +1,15 @@
+CREATE GRAPH TYPE ResultGraphType STRICT {
+(NodeType1: Person {membership_date DATE, name STRING, OPTIONAL email STRING}),
+(NodeType2: Book {author STRING, title STRING, OPTIONAL genre STRING}),
+(NodeType4: NodeType2 & Ebook? {format STRING, file_size INTEGER}),
+(NodeType5: NodeType1 & Librarian {staff_id INTEGER}),
+(NodeType10: NodeType2 & PrintedBook? {publisher STRING, pages INTEGER}),
+(NodeType11: Section {section_name STRING, OPTIONAL floor INTEGER}),
+(NodeType13: NodeType1 & Member {membership_number STRING}),
+(NodeType16: Category {category_name STRING}),
+(:NodeType2|NodeType4|NodeType10) - [EdgeType1 : belongs_to ] -> (:NodeType16),
+(:NodeType13) - [EdgeType2 : reserves {reservation_time DATE}] -> (:NodeType2|NodeType4|NodeType10),
+(:NodeType13) - [EdgeType3 : borrows {due_date DATE}] -> (:NodeType2|NodeType4|NodeType10),
+(:NodeType2|NodeType4|NodeType10) - [EdgeType4 : located_in ] -> (:NodeType11),
+(:NodeType5) - [EdgeType5 : manages ] -> (:NodeType11)
+}

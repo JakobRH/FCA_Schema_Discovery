@@ -1,6 +1,0 @@
-CREATE GRAPH TYPE ExampleGraphType {
-  (PersonType: Person {name STRING, OPTIONAL birthday DATE}),
-  (CustomerType: PersonType & Customer & Gender? {c_id INTEGER}),
-  (AccountType: Account & Number {acct_id INTEGER, OPTIONAL number INTEGER}),
-  (:PersonType|CustomerType)-[OwnsAccountType: owns & posses {since DATE, OPTIONAL amount FLOAT}]->(:AccountType)
-}

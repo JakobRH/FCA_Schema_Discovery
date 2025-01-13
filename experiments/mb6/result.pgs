@@ -1,0 +1,9 @@
+CREATE GRAPH TYPE ResultGraphType STRICT {
+(NodeType1: Synapse & mushroombody_Synapse {confidence FLOAT, location POINT, type STRING, OPTIONAL alpha3 INTEGER, OPTIONAL alpha1 INTEGER, OPTIONAL alpha2 INTEGER}),
+(NodeType2: SynapseSet & mushroombody_SynapseSet),
+(NodeType3: Segment & mushroombody_Segment & mushroombody_Neuron? & Neuron? {roiInfo STRING, size INTEGER, bodyId INTEGER, post INTEGER, pre INTEGER, OPTIONAL alpha3 INTEGER, OPTIONAL alpha2 INTEGER, OPTIONAL alpha1 INTEGER, OPTIONAL instance STRING, OPTIONAL statusLabel STRING, OPTIONAL status STRING, OPTIONAL cropped INTEGER, OPTIONAL type STRING}),
+(NodeType5: Meta & medulla7column_Meta {primaryRois LIST, roiInfo STRING, roiHierarchy STRING, neuroglancerInfo STRING, totalPreCount INTEGER, lastDatabaseEdit STRING, uuid STRING, statusDefinitions STRING, preHPThreshold FLOAT, totalPostCount INTEGER, superLevelRois LIST, latestMutationId INTEGER, logo STRING, postHighAccuracyThreshold FLOAT, meshHost STRING, dataset STRING, postHPThreshold FLOAT, neuroglancerMeta STRING}),
+(:NodeType2|NodeType3) - [EdgeType1 : Contains ] -> (:NodeType2|NodeType1),
+(:NodeType1) - [EdgeType2 : SynapsesTo ] -> (:NodeType1),
+(:NodeType2|NodeType3) - [EdgeType3 : ConnectsTo {OPTIONAL roiInfo STRING, OPTIONAL weight INTEGER, OPTIONAL weightHP INTEGER}] -> (:NodeType2|NodeType3)
+}
