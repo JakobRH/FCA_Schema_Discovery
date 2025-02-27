@@ -1,0 +1,12 @@
+CREATE GRAPH TYPE TimeTestGraphType {
+(TypeA: A1 & A2 & A3 & A4 & A5 {a1 STRING, a2 STRING, a3 STRING, a4 STRING, a5 STRING}),
+(TypeB: B1 & B2 & B3 & B4 & B5 {b1 STRING, b2 STRING, b3 STRING, b4 STRING, b5 STRING}),
+(TypeC: C1 & C2 & C3 & C4 & C5 {c1 STRING, c2 STRING, c3 STRING, c4 STRING, c5 STRING}),
+(TypeD: D1 & D2 & D3 & D4 & D5 {d1 STRING, d2 STRING, d3 STRING, d4 STRING, d5 STRING}),
+(TypeE: E1 & E2 & E3 & E4 & E5 {e1 STRING, e2 STRING, e3 STRING, e4 STRING, e5 STRING}),
+(:TypeA) - [TypeF: F1 & F2 & F3 & F4 & F5 {f1 STRING, f2 STRING, f3 STRING, f4 STRING, f5 STRING}] -> (:TypeB),
+(:TypeB) - [TypeG: G1 & G2 & G3 & G4 & G5 {g1 STRING, g2 STRING, g3 STRING, g4 STRING, g5 STRING}] -> (:TypeC),
+(:TypeC) - [TypeH: H1 & H2 & H3 & H4 & H5 {h1 STRING, h2 STRING, h3 STRING, h4 STRING, h5 STRING}] -> (:TypeD),
+(:TypeD) - [TypeI: I1 & I2 & I3 & I4 & I5 {i1 STRING, i2 STRING, i3 STRING, i4 STRING, i5 STRING}] -> (:TypeE),
+(:TypeE) - [TypeJ: J1 & J2 & J3 & J4 & J5 {j1 STRING, j2 STRING, j3 STRING, j4 STRING, j5 STRING}] -> (:TypeA)
+}

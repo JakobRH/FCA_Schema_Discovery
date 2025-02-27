@@ -1,0 +1,9 @@
+CREATE GRAPH TYPE ResultGraphType STRICT {
+(CourseType: Course {course_id STRING, credits INTEGER}),
+(DepartmentType: Department {dept_name STRING, OPTIONAL location STRING}),
+(NodeType0_new: Person {name STRING, birthdate DATE}),
+(NodeType1_new: NodeType0_new & Professor {professor_id INTEGER}),
+(NodeType2_new: NodeType0_new & Student {student_id INTEGER}),
+(EnrolledInType: held_in {semester STRING}),
+(:NodeType1_new) - [EdgeType0_new : teaches{semester STRING}] -> (:NodeType2_new)
+}

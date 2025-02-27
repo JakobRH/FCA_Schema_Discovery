@@ -5,7 +5,7 @@ from src.graph_type.type import Type
 
 class TypeExtractor:
     """
-    Extracts the type information based on the concept lattices of ndoes and edges.
+    Extracts the type information based on the concept lattices of nodes and edges.
     """
     def __init__(self, config, fca_helper, graph_data, graph_type, extraction_mode):
         """

@@ -1,0 +1,12 @@
+CREATE GRAPH TYPE TimeTestGraphType {
+(TypeA: A1 {a1 STRING, a2 STRING, a3 STRING}),
+(TypeB: B1 {b1 STRING, b2 STRING, b3 STRING}),
+(TypeC: C1 {c1 STRING, c2 STRING, c3 STRING}),
+(TypeD: D1 {d1 STRING, d2 STRING}),
+(TypeE: E1 {e1 STRING, e2 STRING}),
+(:TypeA) - [TypeF: F1 {f1 STRING, f2 STRING, f3 STRING}] -> (:TypeB),
+(:TypeB) - [TypeG: G1 {g1 STRING, g2 STRING, g3 STRING}] -> (:TypeC),
+(:TypeC) - [TypeH: H1 {h1 STRING, h2 STRING}] -> (:TypeD),
+(:TypeD) - [TypeI: I1 {i1 STRING, i2 STRING}] -> (:TypeE),
+(:TypeE) - [TypeJ: J1 {j1 STRING, j2 STRING}] -> (:TypeA)
+}

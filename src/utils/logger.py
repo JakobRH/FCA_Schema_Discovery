@@ -15,5 +15,5 @@ def setup_logger(name, log_file, level=logging.INFO):
 
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
-
+    logger.propagate = False
     return logger

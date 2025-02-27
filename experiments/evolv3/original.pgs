@@ -1,5 +1,0 @@
-CREATE GRAPH TYPE SmallUniversityGraphType {
-(CourseType: Course {course_id STRING, credits INTEGER}),
-(DepartmentType: Department {dept_name STRING, OPTIONAL location STRING}),
-(:CourseType) - [EnrolledInType: held_in {semester STRING}] -> (:DepartmentTyp
-}

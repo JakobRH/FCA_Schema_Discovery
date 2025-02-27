@@ -1,0 +1,10 @@
+CREATE GRAPH TYPE SchemaMergingGraphType6 {
+(PersonType: Person {name STRING, department STRING}),
+(ProfessorType: PersonType {professor_id INTEGER}),
+(ResearchAssistantType: PersonType {assistant_id INTEGER, project_name STRING}),
+(PrincipalInvestigatorType: ProfessorType & ResearchAssistantType {grant_id STRING}),
+(LeadResearcherType: PrincipalInvestigatorType {lead_project STRING}),
+(ProjectManagerType: PrincipalInvestigatorType {project_schedule STRING}),
+(:PrincipalInvestigatorType)-[Mentors: mentors]->(:PrincipalInvestigatorType),
+(:PrincipalInvestigatorType)-[Assists: assists]->(:PrincipalInvestigatorType)
+}

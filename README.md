@@ -1,6 +1,8 @@
 
 # FCA Schema Discovery  
-  
+This repository was created in the course of a master thesis. It includes a fully automatic method for schema discovery in property graphs. The uses Formal Concept Analysis (FCA) to build a formal concept lattice, which serves as basis for a schema. 
+
+
 ## Overview  
 
 ## Usage
@@ -11,233 +13,37 @@ In the `schema_examples` folder you can find a couple of schemas I have tried ou
   
 The configuration file allows you to control how schemas are extracted. Below is a list of the parameters:  
   
-| Parameter                     | Type    | Description                                                         |
-|-------------------------------|---------|---------------------------------------------------------------------|
-| `data_source`                  | String  | Data source type. The current implementation allows for a `neo4j` data source. It is easy to extend the tool with a new data source type.                               |
-| `neo4j.uri`                    | String  | URI for connecting to the Neo4j instance.                           |
-| `neo4j.username`               | String  | Username for the Neo4j connection.                                  |
-| `neo4j.password`               | String  | Password for the Neo4j connection.                                  |
-| `graph_generator`              | Boolean | If true, the graph generator creates a graph based on the schema given in the `graph_generator_schema_path` field and the schema extraction will be executed on this graph and not on the graph given in the `data_source` field.                            |
-| `graph_generator_schema_path`  | String  | File path for the schema used by the graph generator.               |
-| `node_type_extraction`         | String  | Approach for extracting node types. Can only be `label_based`, `property_based` or `label_property_based.`
-| `edge_type_extraction`         | String  | Approach for extracting edge types. Can only be `label_based`, `property_based` or `label_property_based.`
-| `out_dir`                      | String  | Output directory for the generated results.                         |
-| `optional_labels`              | Boolean | Allows optional labels for node and edge types.                              |
-| `optional_properties`          | Boolean | Allows optional properties for node and edge types.                 |
-| `label_outlier_threshold`      | Float   | Threshold for label outlier detection. If the number of nodes/edges that have a label is smaller than `label_outlier_threshold`, then the label will be ignored and will not appear in the result schema.                            |
-| `property_outlier_threshold`   | Float   | Threshold for property outlier detection. If the number of nodes/edges that have a label is smaller than `property_outlier_threshold`, then the property will be ignored and will not appear in the result schema.                            |
-| `endpoint_outlier_threshold`   | Float   | Threshold for endpoint outlier detection. If the number of endpoints of an edge having a certain node type is smaller than `endpoint_outlier_threshold`. Then the this node type will not appear as endpoint node type in the result schema.                         |
-| `merge_threshold`              | Float   | Threshold for merging similar types (e.g., 0.8).                    |
-| `graph_type_name`              | String  | Name of the graph type to be generated.                             |
-| `graph_type_mode`              | String  | Graph type mode. Either `LOOSE` or `STRICT`.                         |
-| `open_labels`                  | Boolean | Result schema will have either all open or closed types regarding their labels, depending on this value.
-| `open_properties`              | Boolean | Result schema will have either all open or closed types regarding their properties, depending on this value.
-| `abstract_type_threshold`      | Float   | Threshold for classifying a type as abstract (e.g., 0.8).           |
-| `remove_inherited_features`    | Boolean | Whether to remove inherited features from subtypes.                 |
-| `abstract_type_lookup`         | Boolean | Enables or disables abstract type lookup.                           |
-| `max_node_types`               | Integer | Maximum number of node types allowed in the result schema.                               |
-| `max_edge_types`               | Integer | Maximum number of edge types allowed in the result schema.                               |                              |
-| `max_types`                    | Boolean | Whether to reduce the graph to a maximum number of node/edge types or not.                         |
-| `validate_graph`               | Boolean | Enables validation of the generated graph against the schema.       |
-
-## Schema Examples  
-A collection of schema examples used for evaluating. For each example the best approach and result is listed.  
-
-### schema1.pgs  
-
-One level inheritane with optional properties and labels.  Graphtype attributes like "LOOSE"/"STRICT" or "OPEN"/"CLOSED" are default values of the config and not based on the graph the schema is extracted from.
-    
-**CREATE GRAPH TYPE ExampleGraphType {    
-  (PersonType: Person {name STRING, OPTIONAL birthday DATE}),    
-  (CustomerType: PersonType & Customer & Gender? {c_id INTEGER}),    
-  (AccountType: Account {acct_id INTEGER}),    
-  (:PersonType|CustomerType)-[OwnsAccountType: owns & posses {since DATE, OPTIONAL amount FLOAT}]->(:AccountType)    
-}**  
-
-#### Result Schema  
-
-**CREATE GRAPH TYPE GraphTypeExample LOOSE {    
-(NodeType1: Person OPEN {name STRING, OPTIONAL birthday DATE, OPEN}),    
-(NodeType2: NodeType1 & Customer & Gender? OPEN {c_id INTEGER, OPEN}),    
-(NodeType3: Account OPEN {acct_id INTEGER, OPEN}),    
-(:NodeType1) - [EdgeType0 : owns & posses {since DATE, OPTIONAL amount FLOAT, OPEN}] -> (:NodeType3)    
-}**  
-
- This result was achieved with label-based approach. Result is the same as original Schema.  
- 
-**CREATE GRAPH TYPE GraphTypeExample LOOSE {    
-(NodeType1: Person OPEN {name STRING, OPTIONAL birthday DATE, OPEN}),    
-(NodeType3: Account OPEN {acct_id INTEGER, OPEN}),    
-(NodeType6: Customer & Person & Gender? OPEN {c_id INTEGER, name STRING, OPTIONAL birthday DATE, OPEN}),    
-(:NodeType1|NodeType6) - [EdgeType0 : owns & posses {since DATE, OPTIONAL amount FLOAT, OPEN}] -> (:NodeType3)    
-}** 
-
-This result was achieved with label-property-based approach with max_type for nodes 3. Here the types one its own  are correctly identified but the inheritance relation is lost because of the merging process.
-
-### schema2.pgs  
-
-A Basic Schema to check if basic requirements can be met.  
-
-**CREATE GRAPH TYPE BasicGraphType {    
-  (PersonType: Person {name STRING, age INTEGER}),    
-  (CustomerType: Item {p_id INTEGER, price FLOAT}),    
-  (:PersonType)-[Buys: purchases {quantity INTEGER}]->(:ProductType)    
-}**  
-
-#### Result Schema  
-
-**CREATE GRAPH TYPE GraphTypeExample LOOSE {    
-(NodeType1: Item OPEN {p_id INTEGER, price FLOAT, OPEN}),    
-(NodeType2: Person OPEN {name STRING, age INTEGER, OPEN}),    
-(:NodeType2) - [EdgeType0 : purchases {quantity INTEGER, OPEN}] -> (:NodeType1)    
-}** 
-
-The label-based approach extracts the schema exactly the same.  
-  
-### schema3.pgs  
-
-A graph with multiple inheritance over two levels with optional labels.    
-
-**CREATE GRAPH TYPE InheritanceGraphType {    
-  (PersonType: Person {name STRING, age INTEGER}),    
-  (WorkerType: Worker {craft STRING}),    
-  (UserType: PersonType & Customer? {username STRING}),    
-  (EmployeeType: PersonType & WorkerType {employee_id INTEGER, salary FLOAT}),    
-  (ManagerType: EmployeeType {manager_level STRING}),    
-  (:EmployeeType)-[Manages: supervises]->(:ManagerType)    
-}**
-
- #### Result Schema  
- 
- **CREATE GRAPH TYPE GraphTypeExample LOOSE {    
-(NodeType1: Person OPEN {age INTEGER, name STRING, OPEN}),    
-(NodeType2: Worker OPEN {craft STRING, OPEN}),    
-(NodeType3: NodeType1 & NodeType2 OPEN {employee_id INTEGER, salary FLOAT, OPTIONAL   manager_level STRING, OPEN}),    
-(NodeType5: NodeType1 OPEN {username STRING, OPEN}),    
-(NodeType6: NodeType5 & Customer OPEN),    
-(:NodeType3) - [EdgeType0 : supervises ] -> (:NodeType3)    
-}**
-
-This result was achieved by the label-property-based approach with max types 5 for nodes and 1 for edges. In general the structure of the original schema was extracted but the Usertype was split up into to types, which can be resolved by setting the max types of nodes to 4. But the Managertype is not recognized on its own but merged into the Employeetype (manager_level STRING becomes an optinal property for Emplyeetype). If max type for nodes is set to 4 the result looks as follows:
-
-**CREATE GRAPH TYPE GraphTypeExample LOOSE {    
-(NodeType1: Person OPEN {age INTEGER, name STRING, OPEN}),   
-(NodeType2: Worker OPEN {craft STRING, OPEN}),   
-(NodeType3: NodeType2 & NodeType1 OPEN {salary FLOAT, employee_id INTEGER, OPTIONAL manager_level STRING, OPEN}),   
-(NodeType5: NodeType1 & Customer? OPEN {username STRING, OPEN}),   
-(:NodeType3) - [EdgeType0 : supervises ] -> (:NodeType3)   
-}**
-
-### schema4.pgs
-
-Schema with more complex relationship and node type are defined by properties and not labels.
-
-**CREATE GRAPH TYPE ComplexRelationshipGraphType {  
-  (PersonType: {name STRING}),  
-  (CustomerType: PersonType {customer_id INTEGER}),  
-  (ProductType: {p_id INTEGER, category STRING}),  
-  (OrderType: {order_id INTEGER, date DATE}),  
-  (:CustomerType)-[PlacesOrderType: places]->(:OrderType),  
-  (:OrderType)-[ContainsProductType: contains]->(:ProductType)  
-}**
-
-#### Result Schema
-
-**CREATE GRAPH TYPE GraphTypeExample LOOSE {   
-(NodeType1:  OPEN {category STRING, p_id INTEGER, OPEN}),   
-(NodeType2:  OPEN {name STRING, OPEN}),   
-(NodeType3:  OPEN {date DATE, order_id INTEGER, OPEN}),   
-(NodeType4: NodeType2 OPEN {customer_id INTEGER, OPEN}),   
-(:NodeType3) - [EdgeType1 : contains ] -> (:NodeType1),   
-(:NodeType4) - [EdgeType2 : places ] -> (:NodeType3)   
-}**
-
-The extraction with property-based approach for nodes and label-based approach for edges, creates the schema exactly like the original.
-
-### schema5.pgs
-
-Cyclic Relationship schema. The result was exactly the same.
-
-**CREATE GRAPH TYPE CyclicGraphType {  
-  (UserType: Person {username STRING}),   
-  (:UserType)-[Follows: follows]->(:UserType),   
-  (:UserType)-[Blocks: blocks]->(:UserType)   
-}**
-
-### schema6.pgs
-
-Disconnected Graph, to see if the structure without inheritance can also be extracted correctly. The result was exactly the same.
-
-**CREATE GRAPH TYPE DisconnectedGraphType {  
-  (UserType: User {username STRING}),  
-  (PostType: Post {content STRING}),  
-  (:UserType)-[LikesType: likes]->(:PostType),  
-  (CityType: City {name STRING, population INTEGER}),  
-  (CountryType: Country {name STRING}),  
-  (:CityType)-[LocatedInType: located_in]->(:CountryType)  
-}**
-
-### schema7.pgs
-
-A quite simple but big graph to check if the number of types in the schema matter.
-
-**CREATE GRAPH TYPE BigUniversityGraphType {  
-  (PersonType: Person {name STRING, birthdate DATE}),  
-  (StudentType: PersonType & Student {student_id INTEGER}),  
-  (ProfessorType: PersonType & Professor {professor_id INTEGER, department STRING}),  
-  (StaffType: PersonType & Staff {staff_id INTEGER, role STRING}),  
-  (ResearcherType: ProfessorType & StaffType & Researcher {research_area STRING, lab STRING}),  
-  (CourseType: Course {course_id STRING, credits INTEGER}),  
-  (DepartmentType: Department {dept_name STRING, OPTIONAL location STRING}),  
-  (ClubType: Club {club_name STRING, OPTIONAL founded DATE}),  
-  (:StudentType)-[EnrolledInType: enrolled_in {semester STRING}]->(:CourseType),  
-  (:ProfessorType)-[TeachesType: teaches {semester STRING, OPTIONAL is_online BOOLEAN}]->(:CourseType),  
-  (:StaffType)-[ManagesType: manages {since DATE}]->(:DepartmentType),  
-  (:ResearcherType)-[CollaboratesWithType: collaborates_with {project_name STRING}]->(:ResearcherType),  
-  (:ProfessorType)-[AdvisorOfType: advisor_of]->(:StudentType),  
-  (:StudentType)-[MemberOfType: member_of {since DATE}]->(:ClubType),  
-  (:ProfessorType)-[MemberOfType: member_of {since DATE}]->(:ClubType),  
-  (:StaffType)-[WorksAtType: works_at]->(:DepartmentType)  
-}**
-
-#### Result Schema
-
-**CREATE GRAPH TYPE GraphTypeExample LOOSE {   
-(NodeType1: Person OPEN {name STRING, birthdate DATE, OPEN}),  
-(NodeType2: NodeType1 & Professor OPEN {professor_id INTEGER, department STRING, OPEN}),  
-(NodeType3: NodeType1 & Staff OPEN {staff_id INTEGER, role STRING, OPEN}),  
-(NodeType4: NodeType1 & Student OPEN {student_id INTEGER, OPEN}),  
-(NodeType5: Course OPEN {course_id STRING, credits INTEGER, OPEN}),  
-(NodeType6: Club OPEN {club_name STRING, OPTIONAL founded DATE, OPEN}),  
-(NodeType7: NodeType2 & NodeType3 & Researcher OPEN {research_area STRING, lab STRING, OPEN}),  
-(NodeType8: Department OPEN {dept_name STRING, OPTIONAL location STRING, OPEN}),  
-(:NodeType2) - [EdgeType1 : advisor_of ] -> (:NodeType4),  
-(:NodeType2) - [EdgeType2 : member_of {since DATE, OPEN}] -> (:NodeType6),  
-(:NodeType3) - [EdgeType3 : works_at ] -> (:NodeType8),  
-(:NodeType2) - [EdgeType4 : teaches {semester STRING, OPTIONAL is_online INTEGER, OPEN}] -> (:NodeType5),  
-(:NodeType4) - [EdgeType5 : enrolled_in {semester STRING, OPEN}] -> (:NodeType5),  
-(:NodeType3) - [EdgeType6 : manages {since DATE, OPEN}] -> (:NodeType8),  
-(:NodeType7) - [EdgeType7 : collaborates_with {project_name STRING, OPEN}] -> (:NodeType7)  
-}**
-
-The result achieved with label-based approach is exactly the same.
-
-### schema8.pgs
-
-A schema that shows the potential to introduce an abstract type. Both node type definitions share properties, that could be gathered into an abstract type.
-
-**CREATE GRAPH TYPE AbstractTypeGraphType {   
-  (StudentType: Student {student_id INTEGER, major STRING, name STRING, birthdate DATE, email STRING, phone_number STRING}),   
-  (ProfessorType: Professor {professor_id INTEGER, department STRING, name STRING, birthdate DATE, email STRING, phone_number STRING})   
-}**
-
-#### Result Schema
-
-**CREATE GRAPH TYPE GraphTypeExample LOOSE {    
-(NodeType1: AbstractNodeTypeNodeType2+NodeType1 & Professor OPEN {professor_id INTEGER,  department STRING, OPEN}),   
-(NodeType2: AbstractNodeTypeNodeType2+NodeType1 & Student OPEN {student_id INTEGER, major STRING, OPEN}),   
-ABSTRACT (AbstractNodeTypeNodeType2+NodeType1 OPEN {name STRING, birthdate DATE, email STRING, phone_number STRING, OPEN})  
-}**
-
-The extraction process recognizes the similarities and gathers them together into an abstract type.
+| **Parameter** | **Type** | **Description** | **Default Value** |
+|--------------|---------|----------------|----------------|
+| `data_source` | `str` | Specifies the source of the data. Currently, only `neo4j` is supported. | `neo4j` |
+| `neo4j.uri` | `str` | URI for connecting to the Neo4j database. | `bolt://localhost:7687` |
+| `neo4j.username` | `str` | Username for authentication. | `neo4j` |
+| `neo4j.password` | `str` | Password for authentication. | `password` |
+| `graph_generator` | `bool` | Enables or disables graph generation mode. | `false` |
+| `graph_generator_schema_path` | `str` | Path to the schema file used for graph generation. | `None` |
+| `graph_generator_max_entities` | `int` | Maximum number of entities to generate per type. | `100000` |
+| `graph_generator_min_entities` | `int` | Minimum number of entities to generate per type. | `10000` |
+| `node_type_extraction` | `str` | Method for extracting node types. | `label_based` |
+| `edge_type_extraction` | `str` | Method for extracting edge types. | `label_based` |
+| `optional_labels` | `bool` | Includes optional labels in the schema. | `true` |
+| `optional_properties` | `bool` | Includes optional properties in the schema. | `true` |
+| `type_outlier_threshold` | `int` | Minimum number of nodes/edges required for a type to be valid. | `5` |
+| `label_outlier_threshold` | `int` | Minimum number of elements containing a label for validity. | `5` |
+| `property_outlier_threshold` | `int` | Minimum number of elements containing a property for validity. | `5` |
+| `endpoint_outlier_threshold` | `int` | Minimum number of edges involving a source/target node type for validity. | `5` |
+| `merge_threshold` | `float` | Similarity threshold for merging types. | `0.6` |
+| `remove_empty_types` | `bool` | Removes types with no nodes/edges assigned. | `true` |
+| `max_node_types` | `int` | Maximum number of node types in the schema. | `0` |
+| `max_edge_types` | `int` | Maximum number of edge types in the schema. | `0` |
+| `max_types` | `bool` | Enables type merging to conform to max allowed types. | `false` |
+| `abstract_type_threshold` | `float` | Threshold for creating abstract types from shared attributes. | `0.6` |
+| `abstract_type_lookup` | `bool` | Enables lookup for abstract types. | `false` |
+| `graph_type_name` | `str` | Name of the graph type. | `ResultGraphType` |
+| `out_dir` | `str` | Directory to save results. | `None` |
+| `validate_graph` | `bool` | Enables graph validation against schema. | `true` |
+| `open_labels` | `bool` | Permits labels not defined in the schema. | `false` |
+| `open_properties` | `bool` | Permits properties not defined in the schema. | `false` |
+| `merge_schema` | `bool` | Enables schema merging. | `false` |
+| `schema_to_merge_path` | `str` | Path to schema file for merging. | `None` |
+| `schema_merge_threshold` | `float` | Similarity threshold for merging entities. | `0.5` |
 

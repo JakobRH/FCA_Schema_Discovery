@@ -229,3 +229,39 @@ class SchemaMerger:
                     valid_supertypes.add(supertype_name)
 
             type_.supertypes = valid_supertypes
+
+        for type_a in types_list:
+            for type_b in types_list:
+                if type_a == type_b:
+                    continue
+
+                is_a_supertype_of_b = (
+                        type_a.labels.issubset(type_b.labels) and
+                        type_a.optional_labels.issubset(type_b.optional_labels) and
+                        all(
+                            key in type_b.properties and type_b.properties[key] == value
+                            for key, value in type_a.properties.items()
+                        ) and
+                        all(
+                            key in type_b.optional_properties and type_b.optional_properties[key] == value
+                            for key, value in type_a.optional_properties.items()
+                        )
+                )
+
+                is_b_supertype_of_a = (
+                        type_b.labels.issubset(type_a.labels) and
+                        type_b.optional_labels.issubset(type_a.optional_labels) and
+                        all(
+                            key in type_a.properties and type_a.properties[key] == value
+                            for key, value in type_b.properties.items()
+                        ) and
+                        all(
+                            key in type_a.optional_properties and type_a.optional_properties[key] == value
+                            for key, value in type_b.optional_properties.items()
+                        )
+                )
+
+                if is_a_supertype_of_b:
+                    type_b.supertypes.add(type_a.name)
+                if is_b_supertype_of_a:
+                    type_a.supertypes.add(type_b.name)

@@ -72,6 +72,16 @@ class Validator:
         if not node_type.open_properties and extra_properties:
             return False
 
+        for prop, value in node.properties.items():
+            expected_data_type = self.graph_data.node_property_data_types.get(prop)
+            if expected_data_type is None:
+                continue
+
+            actual_data_type = self.graph_data.infer_data_type(value)
+
+            if actual_data_type != expected_data_type:
+                return False
+
         return True
 
     def _validate_edge_against_type(self, edge, edge_type, valid_nodes):
@@ -105,6 +115,16 @@ class Validator:
 
         if not edge_type.open_properties and extra_properties:
             return False
+
+        for prop, value in edge.properties.items():
+            expected_data_type = self.graph_data.edge_property_data_types.get(prop)
+            if expected_data_type is None:
+                continue
+
+            actual_data_type = self.graph_data.infer_data_type(value)
+
+            if actual_data_type != expected_data_type:
+                return False
 
         start_node = valid_nodes.get(edge.start_node_id)
         end_node = valid_nodes.get(edge.end_node_id)

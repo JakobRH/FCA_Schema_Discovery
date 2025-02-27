@@ -1,0 +1,11 @@
+CREATE GRAPH TYPE ResultGraphType STRICT {
+(PersonType: Person {department STRING, name STRING}),
+(ProfessorType: PersonType {professor_id INTEGER}),
+(ResearchAssistantType: PersonType {assistant_id INTEGER, project_name STRING}),
+(PrincipalInvestigatorType: ResearchAssistantType {grant_id STRING, OPTIONAL professor_id INTEGER, OPTIONAL student_id INTEGER, OPTIONAL research_topic STRING}),
+(LeadResearcherType: PrincipalInvestigatorType {OPTIONAL lead_project STRING, OPTIONAL research_assistant STRING}),
+(ProjectManagerType: PrincipalInvestigatorType {project_schedule STRING}),
+(NodeType1_new: PersonType {research_topic STRING, student_id INTEGER}),
+(:ProjectManagerType|LeadResearcherType|PrincipalInvestigatorType) - [Mentors : mentors] -> (:ProjectManagerType|LeadResearcherType|PrincipalInvestigatorType),
+(:ProjectManagerType|LeadResearcherType|PrincipalInvestigatorType) - [Assists : assists] -> (:ProjectManagerType|LeadResearcherType|PrincipalInvestigatorType)
+}

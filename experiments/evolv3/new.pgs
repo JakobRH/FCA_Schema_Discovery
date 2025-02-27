@@ -1,6 +1,0 @@
-CREATE GRAPH TYPE SmallUniversityGraphType {
-(PersonType: Person {name STRING, birthdate DATE}),
-(StudentType: PersonType & Student {student_id INTEGER}),
-(ProfessorType: PersonType & Professor {professor_id INTEGER}),
-(:ProfessorType) - [TeachesType: teaches {semester STRING}] -> (:StudentTyp
-}

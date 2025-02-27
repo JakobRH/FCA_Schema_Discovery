@@ -1,0 +1,13 @@
+CREATE GRAPH TYPE TimeTestGraphTypeMerged {
+  (TypeA: A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 {a1 STRING, a2 STRING, a3 STRING, a4 STRING, a5 STRING, a6 STRING, a7 STRING, a8 STRING}),
+  (TypeB: B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8 {b1 STRING, b2 STRING, b3 STRING, b4 STRING, b5 STRING, b6 STRING, b7 STRING, b8 STRING}),
+  (TypeC: C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8 {c1 STRING, c2 STRING, c3 STRING, c4 STRING, c5 STRING, c6 STRING, c7 STRING, c8 STRING}),
+  (TypeD: D1 & D2 & D3 & D4 & D5 & D6 & D7 {d1 STRING, d2 STRING, d3 STRING, d4 STRING, d5 STRING, d6 STRING, d7 STRING}),
+  (TypeE: E1 & E2 & E3 & E4 & E5 & E6 & E7 {e1 STRING, e2 STRING, e3 STRING, e4 STRING, e5 STRING, e6 STRING, e7 STRING}),
+  (:TypeA) - [TypeF: F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 {f1 STRING, f2 STRING, f3 STRING, f4 STRING, f5 STRING, f6 STRING, f7 STRING, f8 STRING}] -> (:TypeB),
+  (:TypeB) - [TypeG: G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8 {g1 STRING, g2 STRING, g3 STRING, g4 STRING, g5 STRING, g6 STRING, g7 STRING, g8 STRING}] -> (:TypeC),
+  (:TypeC) - [TypeH: H1 & H2 & H3 & H4 & H5 & H6 & H7 {h1 STRING, h2 STRING, h3 STRING, h4 STRING, h5 STRING, h6 STRING, h7 STRING}] -> (:TypeD),
+  (:TypeD) - [TypeI: I1 & I2 & I3 & I4 & I5 & I6 & I7 {i1 STRING, i2 STRING, i3 STRING, i4 STRING, i5 STRING, i6 STRING, i7 STRING}] -> (:TypeE),
+  (:TypeE) - [TypeJ: J1 & J2 & J3 & J4 & J5 & J6 & J7 {j1 STRING, j2 STRING, j3 STRING, j4 STRING, j5 STRING, j6 STRING, j7 STRING}] -> (:TypeA)
+}
+

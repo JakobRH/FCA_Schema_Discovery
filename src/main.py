@@ -16,12 +16,19 @@ def main():
     parser.add_argument('--config', type=str, help='Path to config file', default='config\config.json')
     args = parser.parse_args()
 
-    logger = setup_logger('schema_extractor', 'schema_extractor.log')
+    logger = setup_logger('FCA Schema Discovery', 'fca_schema_discovery.log')
     start_time = time.time()
 
+    last_log_time = start_time
+
     def log_with_time(message):
-        elapsed = time.time() - start_time
-        logger.info(f"[{elapsed:.2f}s] {message}")
+        nonlocal last_log_time
+        current_time = time.time()
+        elapsed_total = current_time - start_time
+        elapsed_since_last = current_time - last_log_time
+        last_log_time = current_time
+        logger.info(f"[{elapsed_total:.2f}s | +{elapsed_since_last:.2f}s] {message}")
+
 
     log_with_time('Start Schema Discovery.')
 
