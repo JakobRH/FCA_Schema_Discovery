@@ -6,7 +6,7 @@
         "password": "password"
     },
     "graph_generator": true,
-    "graph_generator_schema_path": "..\\experiments/complex_optional_graph/complex_optional_graph.pgs",
+    "graph_generator_schema_path": "..\\experiments/complex_optional_graph/library_graph.pgs",
     "graph_generator_max_entities": 100000,
     "graph_generator_min_entities": 10000,
     "node_type_extraction": "label_property_based",

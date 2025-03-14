@@ -63,6 +63,7 @@ class TypeExtractor:
 
         if self.extraction_mode == "EDGE":
             self._compute_endpoints(types)
+            self._check_edge_type_supertype_relations(types)
 
         if self.config.get("remove_empty_types"):
             self._remove_type_outliers(types)
@@ -613,3 +614,46 @@ class TypeExtractor:
 
                 if invalid_supertype in type_dict:
                     type_dict[invalid_supertype].subtypes.discard(type_.name)
+
+    def _check_edge_type_supertype_relations(self, edge_types):
+        """
+        Ensures consistency in supertype relations by checking if each start/end node type of a given edge type
+        is either a subtype or the same type as the start/end node types of its supertypes. If not, the supertype is removed.
+
+        @param edge_types: A list of edge types to validate.
+        """
+        type_dict = {type_.name: type_ for type_ in edge_types}
+        node_type_dict = {node_type.name: node_type for node_type in self.graph_type.node_types}
+
+        for edge_type in edge_types:
+            invalid_supertypes = set()
+
+            for supertype_name in edge_type.supertypes:
+
+                supertype = type_dict[supertype_name]
+
+                for start_node_type in edge_type.start_node_types:
+
+                    start_node_obj = node_type_dict[start_node_type]
+
+                    if not any(
+                            (start_node_type == super_start_node or
+                             start_node_obj in self._get_all_subtypes(node_type_dict[super_start_node], node_type_dict))
+                            for super_start_node in supertype.start_node_types
+                    ):
+                        invalid_supertypes.add(supertype_name)
+                        break
+
+                for end_node_type in edge_type.end_node_types:
+
+                    end_node_obj = node_type_dict[end_node_type]
+
+                    if not any(
+                            (end_node_type == super_end_node or
+                             end_node_obj in self._get_all_subtypes(node_type_dict[super_end_node], node_type_dict))
+                            for super_end_node in supertype.end_node_types
+                    ):
+                        invalid_supertypes.add(supertype_name)
+                        break
+
+            edge_type.supertypes -= invalid_supertypes

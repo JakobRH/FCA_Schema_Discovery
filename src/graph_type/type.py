@@ -279,9 +279,6 @@ class Type:
             for key in list(self.optional_properties.keys()):
                 if key in supertype.optional_properties:
                     del self.optional_properties[key]
-            if self.entity == "EDGE":
-                self.start_node_types.difference_update(supertype.start_node_types)
-                self.end_node_types.difference_update(supertype.end_node_types)
 
     def get_all_supertypes(self, type_dict):
         """

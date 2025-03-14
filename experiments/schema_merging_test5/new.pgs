@@ -3,7 +3,7 @@ CREATE GRAPH TYPE SchemaMergingGraphType5 {
 (StationType: Station {station_name STRING}),
 (VehicleType: Vehicle {vehicle_id STRING, capacity INTEGER}),
 (:CityType)-[ConnectionType: connects {distance FLOAT}]->(:CityType),
-(:StationType)-[RailConnectionType: ConnectionType & by_railway {track_type STRING}]->(:StationType),
+(:CityType)-[RailConnectionType: ConnectionType & by_railway {track_type STRING}]->(:CityType),
 (:CityType)-[AirConnectionType: ConnectionType {flight_duration FLOAT}]->(:CityType),
-(:StationType)-[BusConnectionType: ConnectionType {route_number INTEGER}]->(:StationType)
+(:CityType)-[BusConnectionType: ConnectionType {route_number INTEGER}]->(:CityType)
 }

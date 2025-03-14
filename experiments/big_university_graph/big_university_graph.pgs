@@ -12,7 +12,7 @@ CREATE GRAPH TYPE BigUniversityGraphType {
 (:StaffType) - [ManagesType: manages {since DATE}] -> (:DepartmentType),
 (:ResearcherType) - [CollaboratesWithType: collaborates_with {project_name STRING}] -> (:ResearcherType),
 (:ProfessorType) - [AdvisorOfType: advisor_of] -> (:StudentType),
-(:StudentType) - [MemberOfType: member_of {since DATE}] -> (:ClubType),
-(:ProfessorType) - [MemberOfType: member_of {since DATE}] -> (:ClubType),
+(:StudentType) - [MemberOfType1: member_of {since DATE}] -> (:ClubType),
+(:ProfessorType) - [MemberOfType2: member_of {since DATE}] -> (:ClubType),
 (:StaffType) - [WorksAtType: works_at] -> (:DepartmentType)
 }

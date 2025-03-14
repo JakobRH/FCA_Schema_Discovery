@@ -117,31 +117,14 @@ class GraphGenerator:
             for _ in range(num_edges):
                 edge_id = f"edge_{len(self.graph_data.edges) + 1}"
 
-                start_node_type_options = []
-                end_node_type_options = []
+                start_node_type = random.choice(edge_type_def["start_node_types"])
 
-                for start_node_type in edge_type_def["start_node_types"]:
-                    subtypes = [
-                        node_name for node_name, node_def in self.parser.node_types.items()
-                        if start_node_type in node_def['supertypes']
-                    ]
-                    start_node_type_options.append(start_node_type)
-                    start_node_type_options.extend(subtypes)
-                for end_node_type in edge_type_def["end_node_types"]:
-                    subtypes = [
-                        node_name for node_name, node_def in self.parser.node_types.items()
-                        if end_node_type in node_def['supertypes']
-                    ]
-                    end_node_type_options.append(end_node_type)
-                    end_node_type_options.extend(subtypes)
-
-                start_node_type = random.choice(start_node_type_options)
                 start_node_id = self._get_random_node_from_type(start_node_type)
 
                 if start_node_id == None:
                     raise ValueError(f"Wrong definition of Endpoint Types.")
 
-                end_node_type = random.choice(end_node_type_options)
+                end_node_type = random.choice(edge_type_def["end_node_types"])
                 end_node_id = self._get_random_node_from_type(end_node_type)
 
                 if end_node_id == None:

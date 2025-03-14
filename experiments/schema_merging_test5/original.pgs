@@ -3,6 +3,6 @@ CREATE GRAPH TYPE SchemaMergingGraphType5 {
 (StationType: Station {station_name STRING}),
 (VehicleType: Vehicle {vehicle_id STRING, capacity INTEGER}),
 (:CityType)-[ConnectionType: connects {distance FLOAT}]->(:CityType),
-(:StationType)-[RailConnectionType: ConnectionType {track_type STRING}]->(:StationType),
+(:CityType)-[RailConnectionType: ConnectionType {track_type STRING}]->(:CityType),
 (:CityType)-[AirConnectionType: ConnectionType {flight_duration FLOAT}]->(:CityType)
 }

@@ -9,6 +9,8 @@ class SchemaMerger:
     def __init__(self, config):
         self.config = config
         self.type_mapping = {}
+        self.node_types = []
+        self.edge_types = []
 
     def merge_schemas(self, original_node_types, original_edge_types, new_node_types, new_edge_types):
         """
@@ -22,25 +24,25 @@ class SchemaMerger:
         """
         self._propagate_supertype_features(new_node_types, new_edge_types)
 
-        merged_node_types = self._merge_types(original_node_types, new_node_types, "NODE")
+        self.node_types = self._merge_types(original_node_types, new_node_types, "NODE")
 
-        merged_edge_types = self._merge_types(original_edge_types, new_edge_types, "EDGE")
+        self.edge_types = self._merge_types(original_edge_types, new_edge_types, "EDGE")
 
-        self.update_relations(merged_node_types)
-        self.update_relations(merged_edge_types)
+        self.update_relations(self.node_types)
+        self.update_relations(self.edge_types)
 
-        self.check_and_update_supertype_relations(merged_node_types)
-        self.check_and_update_supertype_relations(merged_edge_types)
+        self.check_and_update_supertype_relations(self.node_types)
+        self.check_and_update_supertype_relations(self.edge_types)
 
-        node_type_dict = {type_.name: type_ for type_ in merged_node_types}
-        for type_ in merged_node_types:
+        node_type_dict = {type_.name: type_ for type_ in self.node_types}
+        for type_ in self.node_types:
             type_.remove_inherited_features(node_type_dict)
 
-        edge_type_dict = {type_.name: type_ for type_ in merged_edge_types}
-        for type_ in merged_edge_types:
+        edge_type_dict = {type_.name: type_ for type_ in self.edge_types}
+        for type_ in self.edge_types:
             type_.remove_inherited_features(edge_type_dict)
 
-        return merged_node_types, merged_edge_types
+        return self.node_types, self.edge_types
 
     def _propagate_supertype_features(self, node_types, edge_types):
         """
@@ -225,7 +227,36 @@ class SchemaMerger:
                     for key, value in supertype.optional_properties.items()
                 )
 
-                if has_all_labels and has_all_properties and has_all_optional_labels and has_all_optional_properties:
+                valid_end_nodes = True
+                if type_.entity == "EDGE":
+                    node_type_dict = {node_type.name: node_type for node_type in self.node_types}
+
+                    for start_node_type in type_.start_node_types:
+
+                        start_node_obj = node_type_dict[start_node_type]
+
+                        if not any(
+                                (start_node_type == super_start_node or
+                                 start_node_obj in self._get_all_subtypes(node_type_dict[super_start_node],
+                                                                          node_type_dict))
+                                for super_start_node in supertype.start_node_types
+                        ):
+                            valid_end_nodes = False
+                            break
+
+                    for end_node_type in type_.end_node_types:
+
+                        end_node_obj = node_type_dict[end_node_type]
+
+                        if not any(
+                                (end_node_type == super_end_node or
+                                 end_node_obj in self._get_all_subtypes(node_type_dict[super_end_node], node_type_dict))
+                                for super_end_node in supertype.end_node_types
+                        ):
+                            valid_end_nodes = False
+                            break
+
+                if has_all_labels and has_all_properties and has_all_optional_labels and has_all_optional_properties and valid_end_nodes:
                     valid_supertypes.add(supertype_name)
 
             type_.supertypes = valid_supertypes
@@ -265,3 +296,18 @@ class SchemaMerger:
                     type_b.supertypes.add(type_a.name)
                 if is_b_supertype_of_a:
                     type_a.supertypes.add(type_b.name)
+
+    def _get_all_subtypes(self, type_obj, type_dict):
+        """
+        Recursively retrieves all transitive subtypes for a given Type instance.
+
+        @param type_obj: The Type instance for which to find subtypes.
+        @param type_dict: A dictionary mapping type names to Type instances.
+        @return: A set of all subtypes.
+        """
+        all_subtypes = set(type_obj.subtypes)
+        for subtype_name in type_obj.subtypes:
+            if subtype_name in type_dict:
+                subtype = type_dict[subtype_name]
+                all_subtypes.update(self._get_all_subtypes(subtype, type_dict))
+        return all_subtypes
